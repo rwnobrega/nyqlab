@@ -7,3 +7,7 @@ NyqLab is an educational software aiming to help students learn and practice bas
 * [SciPy](http://www.scipy.org/)
 * [matplotlib](http://matplotlib.org/)
 * [PyQt4](http://www.riverbankcomputing.com/software/pyqt/)
+
+## License
+
+NyqLab is licensed under the GNU General Public License.
