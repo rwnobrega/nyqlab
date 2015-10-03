@@ -94,6 +94,6 @@ class MLT3_Signaling(SignalingScheme):
 collection = collections.OrderedDict([
     ('Unipolar', Unipolar_Signaling()),
     ('Polar', Polar_Signaling()),
-    ('AMI', AMI_Signaling()),
-    ('MLT-3', MLT3_Signaling())
+    ('Alternate Mark Inversion (AMI)', AMI_Signaling()),
+    ('Multi-Level Transmit 3 (MLT-3)', MLT3_Signaling())
 ])
