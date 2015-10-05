@@ -13,6 +13,11 @@ NyqLab is an educational software aiming to help students learn and practice bas
 ```bash
 sudo apt-get install python3-matplotlib python3-pyqt4 python3-scipy python3-numpy
 ```
+### Intalling dependencies on Fedora22
+
+```bash
+dnf install python3-numpy python3-scipy python3-matplotlib python3-PyQt4 python3-matplotlib-qt4 python3-matplotlib-qt5
+```
 
 ## License
 
