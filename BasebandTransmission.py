@@ -473,7 +473,7 @@ class PulseWindow(QtGui.QDialog):
         ax1 = self.figure.add_subplot(1, 2, 1)
         ax2 = self.figure.add_subplot(1, 2, 2)
 
-        sps, hd = 256, 128
+        sps, hd = self.parent.sps, self.parent.hd
         N = hd*sps
         tx = np.arange(-N, N) / sps
         fx = np.arange(-N, N) * (sps / N)
