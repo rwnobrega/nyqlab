@@ -304,10 +304,14 @@ class Window(QtGui.QWidget):
         if not skip_fourier:
             #~self.S = sp.fftpack.fftshift(sp.fftpack.fft(self.s, Nf)) / Nt
             #~self.R = sp.fftpack.fftshift(sp.fftpack.fft(self.r, Nf)) / Nt
+            Ts = 1 / self.symbol_rate
+
             _, self.psd_S = sp.signal.periodogram(self.s, fs, return_onesided=False, nfft=Nf)
             self.psd_S = sp.fftpack.fftshift(self.psd_S)
+            self.psd_S = np.convolve(self.psd_S, np.ones(sps) / sps, mode='same')
             _, self.psd_R = sp.signal.periodogram(self.r, fs, return_onesided=False, nfft=Nf)
             self.psd_R = sp.fftpack.fftshift(self.psd_R)
+            self.psd_R = np.convolve(self.psd_R, np.ones(sps) / sps, mode='same')
 
         self.ber = np.count_nonzero(self.b - self.b_hat) / M
 
