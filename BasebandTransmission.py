@@ -302,8 +302,12 @@ class Window(QtGui.QWidget):
         self.b_hat = self.signaling.decode(self.x_hat)
 
         if not skip_fourier:
-            self.S = sp.fftpack.fftshift(sp.fftpack.fft(self.s, Nf)) / fs
-            self.R = sp.fftpack.fftshift(sp.fftpack.fft(self.r, Nf)) / fs
+            #~self.S = sp.fftpack.fftshift(sp.fftpack.fft(self.s, Nf)) / Nt
+            #~self.R = sp.fftpack.fftshift(sp.fftpack.fft(self.r, Nf)) / Nt
+            _, self.psd_S = sp.signal.periodogram(self.s, fs, return_onesided=False, nfft=Nf)
+            self.psd_S = sp.fftpack.fftshift(self.psd_S)
+            _, self.psd_R = sp.signal.periodogram(self.r, fs, return_onesided=False, nfft=Nf)
+            self.psd_R = sp.fftpack.fftshift(self.psd_R)
 
         self.ber = np.count_nonzero(self.b - self.b_hat) / M
 
@@ -323,8 +327,8 @@ class Window(QtGui.QWidget):
         self.plot_r = self.ax1.plot(self.t, self.r, 'r', linewidth=2)
         self.plot_x = self.ax1.stem(self.tk*Ts - Ts/2, self.x, markerfmt='bo', linefmt='b-', basefmt='b.')
         self.plot_y = self.ax1.stem(self.tk*Ts - Ts/2, self.y, markerfmt='ro', linefmt='r-', basefmt='r.')
-        self.plot_S = self.ax2.plot(self.f, np.abs(self.S), 'b', linewidth=2)
-        self.plot_R = self.ax2.plot(self.f, np.abs(self.R), 'r', linewidth=2)
+        self.plot_S = self.ax2.plot(self.f, self.psd_S, 'b', linewidth=2)
+        self.plot_R = self.ax2.plot(self.f, self.psd_R, 'r', linewidth=2)
 
         self.ax1.grid()
         self.ax1.margins(0.05)
