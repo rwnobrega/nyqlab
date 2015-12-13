@@ -33,6 +33,12 @@ class Unipolar_Signaling(SignalingScheme):
     def decode(self, x):
         return x.astype(int)
 
+    def acorr(self, ell):
+        if ell == 0:
+            return 0.5
+        else:
+            return 0.25
+
 
 class Polar_Signaling(SignalingScheme):
     def __init__(self):
@@ -45,6 +51,12 @@ class Polar_Signaling(SignalingScheme):
 
     def decode(self, x):
         return (0.5*(x + 1.0)).astype(int)
+
+    def acorr(self, ell):
+        if ell == 0:
+            return 1.0
+        else:
+            return 0.0
 
 
 class AMI_Signaling(SignalingScheme):
@@ -62,6 +74,14 @@ class AMI_Signaling(SignalingScheme):
 
     def decode(self, x):
         return np.abs(x).astype(int)
+
+    def acorr(self, ell):
+        if ell == 0:
+            return 0.5
+        elif abs(ell) == 1:
+            return -0.25
+        else:
+            return 0.0
 
 
 class MLT3_Signaling(SignalingScheme):
