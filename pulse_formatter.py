@@ -9,9 +9,11 @@ class PulseFomatter:
         self.symbol_rate = symbol_rate
         self.sps = sps
 
-    def encode(self, x, hd):
+    def encode(self, x, filt_len):
         sps = self.sps
-        tp = np.arange(-hd*sps, hd*sps + 1) / sps
+        N = sps * filt_len // 2
+
+        tp = np.arange(-N, N + 1) / sps
 
         p = self.pulse.pulse(tp)
         w = np.zeros(len(x) * sps)
@@ -19,4 +21,4 @@ class PulseFomatter:
 
         s = sp.signal.fftconvolve(w, p)
 
-        return s[(hd - 1)*sps : -hd*sps]
+        return s[N - sps : -N]

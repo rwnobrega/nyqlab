@@ -257,8 +257,6 @@ class Window(QtGui.QWidget):
         self.pulse_window.exec_()
 
     def onPlotEye(self):
-        sps = self.sps
-        hd = self.hd
         self.eye_window = EyeWindow(self.r, self.s, self.sps, self.sampling_instant, parent=self)
         self.eye_window.exec_()
 
@@ -278,7 +276,7 @@ class Window(QtGui.QWidget):
 
         sps = self.sps  # samples per symbol
         fs = sps * self.symbol_rate  # sampling frequency [Hz]
-        hd = self.hd  # filters half-length [Ts]
+        filt_len = self.filt_len  # filter length [Ts]
         s_inst = self.sampling_instant/100  # sampling instant [Ts]
 
         self.b = self.source.data()
@@ -293,10 +291,10 @@ class Window(QtGui.QWidget):
         self.f = np.arange(-Nf//2, Nf//2) * (fs/Nf)
 
         self.x = self.signaling.encode(self.b)
-        self.s = self.pulse_formatter.encode(self.x, hd)
+        self.s = self.pulse_formatter.encode(self.x, filt_len)
         self.r = self.channel_noise.channel(self.channel_frequency.channel(self.s, fs))
         if self.use_matched:
-            self.r = self.matched_filter.filter(self.r, hd)
+            self.r = self.matched_filter.filter(self.r, filt_len)
         self.y = self.r[(self.tk*sps).astype(int)]
         self.x_hat = self.signaling.detect(self.y)
         self.b_hat = self.signaling.decode(self.x_hat)
@@ -384,23 +382,23 @@ class GeneralOptionsPanel(QtGui.QWidget):
         self.text_seed = QtGui.QLineEdit()
         self.text_sps = QtGui.QLineEdit()
         self.text_symbol_rate = QtGui.QLineEdit()
-        self.text_hd = QtGui.QLineEdit()
+        self.text_filt_len = QtGui.QLineEdit()
 
         layout = QtGui.QFormLayout()
         layout.addRow('Random seed:', self.text_seed)
         layout.addRow('Samples per symbol:', self.text_sps)
         layout.addRow('Symbol rate [baud]:', self.text_symbol_rate)
-        layout.addRow('Filters half-length [Tb]:', self.text_hd)
+        layout.addRow('Filter length [Tb]:', self.text_filt_len)
 
         self.set_seed(0)
         self.set_symbol_rate(1.0)
         self.set_sps(32)
-        self.set_hd(128)
+        self.set_filt_len(256)
 
         self.text_seed.editingFinished.connect(self.onChange_seed)
         self.text_symbol_rate.editingFinished.connect(self.onChange_symbol_rate)
         self.text_sps.editingFinished.connect(self.onChange_sps)
-        self.text_hd.editingFinished.connect(self.onChange_hd)
+        self.text_filt_len.editingFinished.connect(self.onChange_filt_len)
 
         self.setLayout(layout)
 
@@ -416,9 +414,9 @@ class GeneralOptionsPanel(QtGui.QWidget):
         self.parent.sps = value
         self.text_sps.setText(str(value))
 
-    def set_hd(self, value):
-        self.parent.hd = value
-        self.text_hd.setText(str(value))
+    def set_filt_len(self, value):
+        self.parent.filt_len = value
+        self.text_filt_len.setText(str(value))
 
     def onChange_seed(self):
         new_seed = int(self.text_seed.text())
@@ -444,13 +442,13 @@ class GeneralOptionsPanel(QtGui.QWidget):
         else:
             self.set_sps(new_sps)
 
-    def onChange_hd(self):
-        new_hd = int(self.text_hd.text())
-        if new_hd != self.parent.hd:
-            self.set_hd(new_hd)
+    def onChange_filt_len(self):
+        new_filt_len = int(self.text_filt_len.text())
+        if new_filt_len != self.parent.filt_len:
+            self.set_filt_len(new_filt_len)
             self.parent.compute_and_plot()
         else:
-            self.set_sps(new_hd)
+            self.set_sps(new_filt_len)
 
 
 class PulseWindow(QtGui.QDialog):
@@ -481,8 +479,8 @@ class PulseWindow(QtGui.QDialog):
         ax1 = self.figure.add_subplot(1, 2, 1)
         ax2 = self.figure.add_subplot(1, 2, 2)
 
-        sps, hd = self.parent.sps, self.parent.hd
-        N = hd*sps
+        sps, filt_len = self.parent.sps, self.parent.filt_len
+        N = sps * filt_len // 2
         tx = np.arange(-N, N) / sps
         fx = np.arange(-N, N) * (sps / N)
 

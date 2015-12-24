@@ -8,9 +8,11 @@ class MatchedFilter:
         self.pulse = pulse
         self.sps = sps
 
-    def filter(self, y, hd):
+    def filter(self, y, filt_len):
         sps = self.sps
-        tq = np.arange(-hd*sps, hd*sps + 1) / sps
+        N = sps * filt_len // 2
+
+        tq = np.arange(-N, N + 1) / sps
 
         q = self.pulse.pulse(-tq)
         q /= np.sum(np.abs(q)**2) / sps
