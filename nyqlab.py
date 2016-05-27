@@ -371,84 +371,44 @@ class Window(QtGui.QWidget):
         plt.close(self.figure)
 
 
-# TODO: Code reuse.
 class GeneralOptionsPanel(QtGui.QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent = parent
+
+        self.options = {
+            'seed': ('Random Seed', 0),
+            'sps': ('Samples per symbol', 32),
+            'symbol_rate': ('Symbol rate [baud]', 1.0),
+            'filt_len': ('Filter length [Tb]', 256)
+        }
+
         self.initUI()
 
     def initUI(self):
-        self.text_seed = QtGui.QLineEdit()
-        self.text_sps = QtGui.QLineEdit()
-        self.text_symbol_rate = QtGui.QLineEdit()
-        self.text_filt_len = QtGui.QLineEdit()
-
         layout = QtGui.QFormLayout()
-        layout.addRow('Random seed:', self.text_seed)
-        layout.addRow('Samples per symbol:', self.text_sps)
-        layout.addRow('Symbol rate [baud]:', self.text_symbol_rate)
-        layout.addRow('Filter length [Tb]:', self.text_filt_len)
+        self.text = {}
 
-        self.set_seed(0)
-        self.set_symbol_rate(1.0)
-        self.set_sps(32)
-        self.set_filt_len(256)
-
-        self.text_seed.editingFinished.connect(self.onChange_seed)
-        self.text_symbol_rate.editingFinished.connect(self.onChange_symbol_rate)
-        self.text_sps.editingFinished.connect(self.onChange_sps)
-        self.text_filt_len.editingFinished.connect(self.onChange_filt_len)
+        for key, val in self.options.items():
+            self.text[key] = QtGui.QLineEdit()
+            layout.addRow(val[0] + ':', self.text[key])
+            self.set_text(key, val[1])
+            self.text[key].editingFinished.connect(lambda key=key: self.onChange_text(key))
 
         self.setLayout(layout)
 
-    def set_seed(self, value):
-        self.parent.seed = value
-        self.text_seed.setText(str(value))
+    def set_text(self, key, value):
+        setattr(self.parent, key, value)
+        self.text[key].setText(str(value))
 
-    def set_symbol_rate(self, value):
-        self.parent.symbol_rate = value
-        self.text_symbol_rate.setText(str(value))
-
-    def set_sps(self, value):
-        self.parent.sps = value
-        self.text_sps.setText(str(value))
-
-    def set_filt_len(self, value):
-        self.parent.filt_len = value
-        self.text_filt_len.setText(str(value))
-
-    def onChange_seed(self):
-        new_seed = int(self.text_seed.text())
-        if new_seed != self.parent.seed:
-            self.set_seed(new_seed)
+    def onChange_text(self, key):
+        type_ = type(self.options[key][1])
+        new_value = type_(self.text[key].text())
+        if new_value != getattr(self.parent, key):
+            self.set_text(key, new_value)
             self.parent.compute_and_plot()
         else:
-            self.set_seed(new_seed)
-
-    def onChange_symbol_rate(self):
-        new_symbol_rate = float(self.text_symbol_rate.text())
-        if new_symbol_rate != self.parent.symbol_rate:
-            self.set_symbol_rate(new_symbol_rate)
-            self.parent.compute_and_plot()
-        else:
-            self.set_symbol_rate(new_symbol_rate)
-
-    def onChange_sps(self):
-        new_sps = int(self.text_sps.text())
-        if new_sps != self.parent.sps:
-            self.set_sps(new_sps)
-            self.parent.compute_and_plot()
-        else:
-            self.set_sps(new_sps)
-
-    def onChange_filt_len(self):
-        new_filt_len = int(self.text_filt_len.text())
-        if new_filt_len != self.parent.filt_len:
-            self.set_filt_len(new_filt_len)
-            self.parent.compute_and_plot()
-        else:
-            self.set_sps(new_filt_len)
+            self.set_text(key, new_value)
 
 
 class PulseWindow(QtGui.QDialog):
