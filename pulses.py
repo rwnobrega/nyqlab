@@ -54,14 +54,14 @@ class Sinc_Pulse(Pulse):
 
 
 class SquaredSinc_Pulse(Pulse):
-    tx_lim, fx_lim = 10.0, 1.5
+    tx_lim, fx_lim = 10.0, 2.5
 
     def pulse(self, tx):
         return np.sinc(tx)**2
 
 
 class RaisedCosine_Pulse(Pulse):
-    tx_lim, fx_lim = 10.0, 1.5
+    tx_lim, fx_lim = 10.0, 2.5
     rolloff = 0.5
 
     def pulse(self, tx):
@@ -87,7 +87,7 @@ class RaisedCosine_Pulse_Widget(Pulse_Widget):
 
 
 class RootRaisedCosine_Pulse(Pulse):
-    tx_lim, fx_lim = 10.0, 1.5
+    tx_lim, fx_lim = 10.0, 2.5
     rolloff = 0.5
 
     def pulse(self, tx):
