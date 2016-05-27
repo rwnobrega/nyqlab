@@ -27,7 +27,7 @@ class Window(QtGui.QWidget):
         self.initUI()
 
     def initUI(self):
-        self.setWindowTitle('Baseband transmission')
+        self.setWindowTitle('NyqLab')
 
         # Figure
         self.figure = plt.figure()
