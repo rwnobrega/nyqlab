@@ -1,5 +1,3 @@
-import collections
-
 import numpy as np
 import scipy as sp
 
@@ -26,7 +24,7 @@ class ChannelFrequency_Widget(QtGui.QWidget):
 # Ideal channel
 
 class Bypass_ChannelFrequency(ChannelFrequency):
-    def channel(self, s, fs=None):
+    def process(self, s):
         return s
 
 
@@ -36,9 +34,10 @@ class IdealLowpass_ChannelFrequency(ChannelFrequency):
     def __init__(self, bandwidth=2.0):
         self.bandwidth = bandwidth
 
-    def channel(self, s, fs):
-        N = len(s)
-        f = np.arange(-N//2, N//2) * (fs/N)
+    def process(self, s):
+        fs = self.system.samp_freq
+        Ns = len(s)
+        f = np.arange(-Ns//2, Ns//2) * (fs/Ns)
         Bt = self.bandwidth
         HC = 1.0 * ((-Bt <= f) & (f < Bt))
         S = sp.fftpack.fftshift(sp.fftpack.fft(s)) / fs
@@ -69,10 +68,11 @@ class FirstOrderLowpass_ChannelFrequency(ChannelFrequency):
     def __init__(self, cutoff_frequency=2.0):
         self.cutoff_frequency = cutoff_frequency
 
-    def channel(self, s, fs):
-        N = len(s)
+    def process(self, s):
+        fs = self.system.samp_freq
+        Ns = len(s)
         f0 = self.cutoff_frequency
-        f = np.arange(-N//2, N//2) * (fs/N)
+        f = np.arange(-Ns//2, Ns//2) * (fs/Ns)
         HC = 1.0 / (1.0 + 1j * 2.0 * np.pi * f/f0)
         S = sp.fftpack.fftshift(sp.fftpack.fft(s)) / fs
         R0 = S * HC
@@ -102,10 +102,11 @@ class SecondOrderBandpass_ChannelFrequency(ChannelFrequency):
     def __init__(self, cutoff_frequency=2.0):
         self.cutoff_frequency = cutoff_frequency
 
-    def channel(self, s, fs):
-        N = len(s)
+    def process(self, s):
+        fs = self.system.samp_freq
+        Ns = len(s)
         f0 = self.cutoff_frequency
-        f = np.arange(-N//2, N//2) * (fs/N)
+        f = np.arange(-Ns//2, Ns//2) * (fs/Ns)
         HC = (1j * 2.0 * np.pi * f) / (1.0 + 1j * 2.0 * np.pi * f/f0)
         S = sp.fftpack.fftshift(sp.fftpack.fft(s)) / fs
         R0 = S * HC
@@ -129,9 +130,9 @@ class SecondOrderBandpass_ChannelFrequency_Widget(ChannelFrequency_Widget):
         self.update_signal.emit()
 
 
-collection = collections.OrderedDict([
+choices = [
     ('[Bypass]', Bypass_ChannelFrequency()),
     ('Ideal lowpass', IdealLowpass_ChannelFrequency()),
     ('First order lowpass', FirstOrderLowpass_ChannelFrequency()),
     ('Second order bandpass', SecondOrderBandpass_ChannelFrequency()),
-])
+]

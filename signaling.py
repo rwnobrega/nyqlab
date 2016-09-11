@@ -4,13 +4,19 @@ import numpy as np
 
 from PyQt4 import QtCore, QtGui
 
-from threshold_detector import ThresholdDetector
+
+def slicer(y, thresholds, values):
+    x_hat = np.empty_like(y)
+    for k in range(len(y)):
+        for (i, th) in enumerate(thresholds):
+            if y[k] < th:
+                x_hat[k] = values[i]
+                break
+            x_hat[k] = values[-1]
+    return x_hat
 
 
 class SignalingScheme:
-    def __init__(self):
-        self.detector = ThresholdDetector(self.thresholds, self.values)
-
     def widget(self):
         try:
             return globals()[self.__class__.__name__ + '_Widget'](self)
@@ -18,7 +24,7 @@ class SignalingScheme:
             return QtGui.QLabel('<i>No options available for this signaling scheme.</i>')
 
     def detect(self, y):
-        return self.detector.detect(y)
+        return slicer(x, self.thresholds, self.values)
 
 
 class Unipolar_Signaling(SignalingScheme):
@@ -105,15 +111,15 @@ class MLT3_Signaling(SignalingScheme):
 
     def decode(self, x):  # Not optimal!
         bits_hat = np.zeros(np.size(x))
-        x_hat = self.detector.detect(x)
+        x_hat = self.detect(x)
         for i in range(len(x_hat)):
             bits_hat[i] = (x_hat[i] != x_hat[i - 1]).astype(int)
         return bits_hat
 
 
 collection = collections.OrderedDict([
-    ('Unipolar', Unipolar_Signaling()),
     ('Polar', Polar_Signaling()),
+    ('Unipolar', Unipolar_Signaling()),
     ('Alternate Mark Inversion (AMI)', AMI_Signaling()),
     ('Multi-Level Transmit 3 (MLT-3)', MLT3_Signaling())
 ])

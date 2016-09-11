@@ -1,5 +1,3 @@
-import collections
-
 import numpy as np
 
 from PyQt4 import QtCore, QtGui
@@ -25,30 +23,31 @@ class BitSource_Widget(QtGui.QWidget):
 # Random bits
 
 class Random_BitSource(BitSource):
-    def __init__(self, nbits=16):
-        self.nbits = nbits
+    def __init__(self, n_bits=20):
+        self.n_bits = n_bits
 
-    def data(self):
-        return np.random.randint(0, high=2, size=self.nbits)
+    def process(self):
+        self.system.n_bits = self.n_bits  # TODO: Should be in __init__
+        return np.random.randint(0, high=2, size=self.n_bits)
 
 
 class Random_BitSource_Widget(BitSource_Widget):
     def initUI(self):
         layout = QtGui.QHBoxLayout()
 
-        self.nbits = QtGui.QLineEdit(str(self.source.nbits))
-        self.nbits.editingFinished.connect(self.onChange)
+        self.text_n_bits = QtGui.QLineEdit(str(self.source.n_bits))
+        self.text_n_bits.editingFinished.connect(self.onChange)
         layout.addWidget(QtGui.QLabel('Number of bits:'))
-        layout.addWidget(self.nbits)
+        layout.addWidget(self.text_n_bits)
 
         self.setLayout(layout)
 
     def onChange(self):
-        new_nbits = int(self.nbits.text())
-        self.nbits.setText(str(new_nbits))
+        new_n_bits = int(self.text_n_bits.text())
+        self.text_n_bits.setText(str(new_n_bits))
 
-        if new_nbits != self.source.nbits:
-            self.source.nbits = new_nbits
+        if new_n_bits != self.source.n_bits:
+            self.source.n_bits = new_n_bits
             self.update_signal.emit()
 
 
@@ -61,7 +60,8 @@ class Fixed_BitSource(BitSource):
         else:
             self.bits = bits
 
-    def data(self):
+    def process(self):
+        self.system.n_bits = len(self.bits)  # TODO: Should be in __init__
         return self.bits
 
 
@@ -85,7 +85,7 @@ class Fixed_BitSource_Widget(BitSource_Widget):
             self.update_signal.emit()
 
 
-collection = collections.OrderedDict([
+choices = [
     ('Random bits', Random_BitSource()),
     ('Fixed bit sequence', Fixed_BitSource())
-])
+]

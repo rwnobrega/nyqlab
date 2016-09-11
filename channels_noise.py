@@ -1,5 +1,3 @@
-import collections
-
 import numpy as np
 
 from PyQt4 import QtCore, QtGui
@@ -25,7 +23,7 @@ class ChannelNoise_Widget(QtGui.QWidget):
 # Ideal channel
 
 class Bypass_ChannelNoise(ChannelNoise):
-    def channel(self, s, fs=None):
+    def process(self, s, fs=None):
         return s
 
 
@@ -36,7 +34,7 @@ class AWGN_ChannelNoise(ChannelNoise):
         self.snr_db = snr_db
         self.sps = sps
 
-    def channel(self, s, fs=None):
+    def process(self, s, fs=None):
         snr = 10.0 ** (0.1 * self.snr_db)
         signal_power = np.mean(s**2)
         noise_power = self.sps * signal_power / snr
@@ -60,7 +58,7 @@ class AWGN_ChannelNoise_Widget(ChannelNoise_Widget):
         self.update_signal.emit()
 
 
-collection = collections.OrderedDict([
+choices = [
     ('[Bypass]', Bypass_ChannelNoise()),
     ('AWGN', AWGN_ChannelNoise())
-])
+]

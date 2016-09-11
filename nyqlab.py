@@ -1,30 +1,120 @@
 #!/usr/bin/env python3
 
+import functools
+import os
 import sys
-
-import numpy as np
-import scipy as sp
 
 from PyQt4 import QtCore, QtGui
 
+import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
-import matplotlib.pyplot as plt
 
-#~plt.rc('font', **{'family':'serif', 'serif':['Times']})
-#~plt.rc('text', usetex=True)
-#~plt.rc('text.latex', preamble=r'\usepackage{bm}')
+import sources, encoder, tx_filter, channels_frequency, channels_noise, rx_filter, sampler, decoder
 
-import sources, channels_frequency, channels_noise, signaling, pulses
+from system_simulator import SystemSimulator, Block
+from system_diagram import SystemDiagram, BlockD, ConnectionD
 
-from pulse_formatter import PulseFomatter
-from matched_filter import MatchedFilter
+from window_pulse import WindowPulse
+from window_eye import WindowEye
 
 
 class Window(QtGui.QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
+
+        self.setupSystem()
+        self.setupSystemDiagram()
+        self.setupOptions()
         self.initUI()
+
+        self.compute_and_plot()
+
+    def setupSystem(self):
+        blocks_s = [
+            Block(sources, 'D'),
+            Block(encoder, 'D'),
+            Block(tx_filter, 'C'),
+            Block(channels_frequency, 'C'),
+            Block(channels_noise, 'C'),
+            Block(rx_filter, 'C'),
+            Block(sampler, 'D'),
+            Block(decoder, 'D'),
+        ]
+
+        self.system = SystemSimulator(blocks_s)
+
+        # Ugly monkey patch:
+        for block in self.system.blocks:
+            block.box.system = self.system
+
+    def setupSystemDiagram(self):
+        blocks_d = [
+            BlockD('Source',                            (1, 0, 1, 1),           alias='Src'),
+            BlockD('Coder',                             (3, 0, 2, 1)),
+            BlockD('Transmit filter',                   (8, 0, 2, 1),           alias='TX filter'),
+            BlockD('Channel frequency response',        (10, 1.5, 2, 1),        alias='Freq'),
+            BlockD('Channel noise',                     (10, 3, 2, 1),          alias='Noise'),
+            BlockD('Receive filter',                    (8, 4.5, 2, 1),         alias='RX filter'),
+            BlockD('Sampler',                           (5.5, 4.5, 2, 1)),
+            BlockD('Decoder',                           (3, 4.5, 2, 1))
+        ]
+
+        connections_d = [
+            ConnectionD('Bits',                         [(2, 0.5), (3, 0.5)],               (0x00, 0x00, 0x00)),
+            ConnectionD('Input symbols',                [(5, 0.5), (8, 0.5)],               (0x00, 0x00, 0xFF)),
+            ConnectionD('Sent signal',                  [(10, 0.5), (11, 0.5), (11, 1.5)],  (0x00, 0x00, 0xFF)),
+            ConnectionD('Channel output (no noise)',    [(11, 2.5), (11, 3)],               (0x00, 0x80, 0x00)),
+            ConnectionD('Received signal',              [(11, 4), (11, 5), (10, 5)],        (0xFF, 0x00, 0xFF)),
+            ConnectionD('Receive filter output',        [(8, 5), (7.5, 5)],                 (0xFF, 0x00, 0x00), True),
+            ConnectionD('Output symbols',               [(5.5, 5), (5, 5)],                 (0xFF, 0x00, 0x00)),
+            ConnectionD('Estimated bits',               [(2, 5), (3.5, 5)],                 (0xAA, 0xAA, 0xAA)),
+        ]
+
+        self.system_diagram = SystemDiagram(self, self.system, blocks_d, connections_d)
+
+    def setupOptions(self):
+        self.options_general = {
+            'seed': 'Random Seed',
+            'sps': 'Samples per symbol',
+            'bit_rate': 'Bit rate [bit/s]',
+        }
+
+        self.show_n_symbols = 20
+        self.show_psd = False
+        self.options_visualization = {
+            'show_n_symbols': 'Number of symbols to show',
+            'show_psd': 'Show power spectral density',
+        }
+
+    def _getBlocksOptionsWidget(self, idx):
+        block = self.system.blocks[idx]
+        block_name = self.system_diagram.blocks_d[idx].name
+
+        layout = QtGui.QVBoxLayout()
+        layout.addWidget(QtGui.QLabel('<b>{}:</b>'.format(block_name)))
+
+        combo = QtGui.QComboBox(self)
+        for name, obj in block.module.choices:
+            combo.addItem(name)
+        combo.activated[int].connect(functools.partial(self.onBlockComboActivated, idx))
+        layout.addWidget(combo)
+
+        block_choice = []
+        for idx_choice, (name, obj) in enumerate(block.module.choices):
+            w = obj.widget()
+            w.setVisible(idx_choice == 0)
+            if hasattr(w, 'update_signal'):
+                w.update_signal.connect(self.compute_and_plot)
+            block_choice.append(w)
+            layout.addWidget(w)
+
+        layout.addStretch()
+
+        widget = QtGui.QWidget()
+        widget.setLayout(layout)
+
+        return widget, block_choice
 
     def initUI(self):
         self.setWindowTitle('NyqLab')
@@ -34,140 +124,32 @@ class Window(QtGui.QWidget):
         self.canvas = FigureCanvas(self.figure)
         self.toolbar = NavigationToolbar(self.canvas, self)
 
-        # Create tabs
-        tabs = QtGui.QTabWidget()
-        self.tab_source = QtGui.QWidget()
-        self.tab_transmitter = QtGui.QWidget()
-        self.tab_channel = QtGui.QWidget()
-        self.tab_receiver = QtGui.QWidget()
-        tabs.addTab(self.tab_source, 'Source')
-        tabs.addTab(self.tab_transmitter, 'Transmitter')
-        tabs.addTab(self.tab_channel, 'Channel')
-        tabs.addTab(self.tab_receiver, 'Receiver')
+        # Construct widgets for block options
+        self.block_options = []
+        self.block_choices = []
+        for i in range(len(self.system.blocks)):
+            widget, block_choice = self._getBlocksOptionsWidget(i)
+            self.block_options.append(widget)
+            self.block_choices.append(block_choice)
 
-        MODULES = {
-            'Source': sources,
-            'Signaling': signaling,
-            'Pulse': pulses,
-            'ChannelFrequency': channels_frequency,
-            'ChannelNoise': channels_noise
-        }
+        # General options frame
+        self.panel_options_general = PanelOptions(self, 'General options', self.system, self.options_general)
+        self.panel_options_visualization = PanelOptions(self, 'Visualization options', self, self.options_visualization)
 
-        combos = {}
-        for key, module in MODULES.items():
-            new_combo = QtGui.QComboBox(self)
-            for k in module.collection:
-                new_combo.addItem(k)
-            activate_attr = getattr(self, 'onComboActivated_' + key)
-            new_combo.activated[str].connect(activate_attr)
-            combos[key] = new_combo
+        # Toolbar
+        action_options_general = QtGui.QAction(QtGui.QIcon.fromTheme('preferences-desktop'), 'General options', self)
+        action_options_general.triggered.connect(self.showGeneralOptions)
 
-        def _populate_combo(layout, module_key, title):
-            layout.addWidget(QtGui.QLabel(title))
-            layout.addWidget(combos[module_key])
-            dic = {}
-            for i, (k, v) in enumerate(MODULES[module_key].collection.items()):
-                dic[k] = v.widget()
-                dic[k].setVisible(i == 0)
-                if hasattr(dic[k], 'update_signal'):
-                    dic[k].update_signal.connect(self.compute_and_plot)
-                layout.addWidget(dic[k])
-            return dic
+        action_view_pulse = QtGui.QAction(QtGui.QIcon('media/pulse'), 'View pulse', self)
+        action_view_pulse.triggered.connect(self.showWindowPulse)
 
-        self.source = list(sources.collection.values())[0]
-        self.pulse = list(pulses.collection.values())[0]
-        self.signaling = list(signaling.collection.values())[0]
-        self.channel_frequency = list(channels_frequency.collection.values())[0]
-        self.channel_noise = list(channels_noise.collection.values())[0]
+        action_view_eye = QtGui.QAction(QtGui.QIcon('media/eye'), 'View eye diagram', self)
+        action_view_eye.triggered.connect(self.showWindowEye)
 
-        # Source tab
-        layout = QtGui.QVBoxLayout()
-        self.sources = _populate_combo(layout, 'Source', 'Source:')
-        layout.addStretch()
-        self.tab_source.setLayout(layout)
-
-        # Transmitter tab
-        layout = QtGui.QVBoxLayout()
-        self.signaling_schemes = _populate_combo(layout, 'Signaling', 'Signaling scheme:')
-        layout.addSpacing(20)
-        self.pulses = _populate_combo(layout, 'Pulse', 'Pulse:')
-        self.tab_transmitter.setLayout(layout)
-        layout.addStretch()
-
-        # Channel tab
-        layout = QtGui.QVBoxLayout()
-        self.channels_frequency = _populate_combo(layout, 'ChannelFrequency', 'Frequency response:')
-        layout.addSpacing(20)
-        self.channels_noise = _populate_combo(layout, 'ChannelNoise', 'Noise:')
-        layout.addStretch()
-        self.tab_channel.setLayout(layout)
-
-        # Receiver tab
-        layout = QtGui.QVBoxLayout()
-        checkbox_matched = QtGui.QCheckBox('Use matched filter')
-        checkbox_matched.stateChanged.connect(self.onCheckbox_Matched)
-        self.use_matched = False
-        layout.addWidget(checkbox_matched)
-
-        self.sampling_instant_text = QtGui.QLineEdit()
-        self.sampling_instant_slider = QtGui.QSlider(QtCore.Qt.Horizontal)
-        self.sampling_instant_slider.setRange(0, 100)
-        layout_sampling = QtGui.QHBoxLayout()
-        layout_sampling.addWidget(QtGui.QLabel('Sampling instant [% of Tb]:'), 1)
-        layout_sampling.addWidget(self.sampling_instant_text, 1)
-        layout_sampling.addWidget(self.sampling_instant_slider, 3)
-        widget_sampling = QtGui.QWidget()
-        widget_sampling.setLayout(layout_sampling)
-        layout.addWidget(widget_sampling)
-        layout.addStretch()
-        self.tab_receiver.setLayout(layout)
-
-        self.set_sampling_instant(50)
-        self.sampling_instant_text.editingFinished.connect(self.onChange_SamplingText)
-        self.sampling_instant_slider.valueChanged[int].connect(self.onChange_SamplingInstantSlider)
-
-        # Options frame
-        self.opt_panel = GeneralOptionsPanel(self)
-        layout = QtGui.QVBoxLayout()
-        layout.addWidget(self.opt_panel)
-        frame_options = QtGui.QGroupBox(title='General options')
-        frame_options.setLayout(layout)
-
-        # What to show
-        def _add_checkbox(layout, title, connect_addr, i, j):
-            checkbox = QtGui.QCheckBox(title)
-            checkbox.toggle()
-            checkbox.stateChanged.connect(connect_addr)
-            layout.addWidget(checkbox, i, j)
-
-        layout = QtGui.QGridLayout()
-        _add_checkbox(layout, 'Input symbols', self.onCheckbox_InSymbols, 0, 0)
-        _add_checkbox(layout, 'Output symbols', self.onCheckbox_OutSymbols, 1, 0)
-        _add_checkbox(layout, 'Sent signal', self.onCheckbox_Sent, 0, 1)
-        _add_checkbox(layout, 'Received signal', self.onCheckbox_Received, 1, 1)
-        self.ber_label = QtGui.QLabel('BER: 0.0')
-        layout.addWidget(self.ber_label)
-        frame_what_to_show = QtGui.QGroupBox(title='What to show')
-        frame_what_to_show.setLayout(layout)
-
-        # Extra plots
-        button_pulse = QtGui.QPushButton('Pulse')
-        button_pulse.clicked.connect(self.onPlotPulse)
-        button_eye = QtGui.QPushButton('Eye diagram')
-        button_eye.clicked.connect(self.onPlotEye)
-        layout = QtGui.QHBoxLayout()
-        layout.addWidget(button_pulse)
-        layout.addWidget(button_eye)
-        frame_extra_plots = QtGui.QGroupBox(title='Extra plots')
-        frame_extra_plots.setLayout(layout)
-
-        self.plot_sent = True
-        self.plot_insymbols = True
-        self.plot_received = True
-        self.plot_outsymbols = True
-
-        self.pulse_formatter = PulseFomatter(self.pulse, self.symbol_rate, self.sps)
-        self.matched_filter = MatchedFilter(self.pulse, self.sps)
+        xtoolbar = QtGui.QToolBar()
+        xtoolbar.addAction(action_options_general)
+        xtoolbar.addAction(action_view_pulse)
+        xtoolbar.addAction(action_view_eye)
 
         # Main layout
         layout = QtGui.QVBoxLayout()
@@ -177,193 +159,118 @@ class Window(QtGui.QWidget):
         widget_left.setLayout(layout)
 
         layout = QtGui.QVBoxLayout()
-        layout.addWidget(tabs)
-        layout.addWidget(frame_options)
-        layout.addWidget(frame_what_to_show)
-        layout.addWidget(frame_extra_plots)
+        layout.addWidget(xtoolbar)
+        layout.addWidget(self.system_diagram)
+        for w in self.block_options:
+            layout.addWidget(w)
+        layout.addWidget(self.panel_options_general)
+        layout.addWidget(self.panel_options_visualization)
+
         widget_right = QtGui.QWidget()
         widget_right.setLayout(layout)
 
         layout = QtGui.QHBoxLayout()
-        layout.addWidget(widget_left, 2)
         layout.addWidget(widget_right, 1)
+        layout.addWidget(widget_left, 2)
         self.setLayout(layout)
 
+        self.showBlockOption(0)
+
+    def showBlockOption(self, idx):
+        self.panel_options_general.setVisible(False)
+        self.panel_options_visualization.setVisible(False)
+        for (i, w) in enumerate(self.block_options):
+            w.setVisible(i == idx)
+
+    def showGeneralOptions(self):
+        for (i, w) in enumerate(self.block_options):
+            w.setVisible(False)
+        self.panel_options_general.setVisible(True)
+        self.panel_options_visualization.setVisible(True)
+
+    def onBlockComboActivated(self, idx_block, idx_choice):
+        block = self.system.blocks[idx_block]
+
+        for (i, widget) in enumerate(self.block_choices[idx_block]):
+            widget.setVisible(i == idx_choice)
+
+        block.box = block.module.choices[idx_choice][1]
+        block.box.system = self.system
+
         self.compute_and_plot()
 
-    def onComboActivated_Source(self, text):
-        for k in sources.collection:
-            self.sources[k].setVisible(k == text)
-        self.source = sources.collection[text]
-        self.compute_and_plot()
-
-    def onComboActivated_Pulse(self, text):
-        for k in pulses.collection:
-            self.pulses[k].setVisible(k == text)
-        self.pulse = pulses.collection[text]
-        self.compute_and_plot()
-
-    def onComboActivated_Signaling(self, text):
-        self.signaling = signaling.collection[text]
-        self.compute_and_plot()
-
-    def onComboActivated_ChannelFrequency(self, text):
-        self.channel_frequency = channels_frequency.collection[text]
-        for k in channels_frequency.collection:
-            self.channels_frequency[k].setVisible(k == text)
-        self.compute_and_plot()
-
-    def onComboActivated_ChannelNoise(self, text):
-        self.channel_noise = channels_noise.collection[text]
-        for k in channels_noise.collection:
-            self.channels_noise[k].setVisible(k == text)
-        self.compute_and_plot()
-
-    def onCheckbox_InSymbols(self, state):
-        self.plot_insymbols = (state == QtCore.Qt.Checked)
+    def toggleSignal(self, idx):
+        self.system_diagram.connections_d[idx].visible ^= True
         self.update_visible()
 
-    def onCheckbox_Sent(self, state):
-        self.plot_sent = (state == QtCore.Qt.Checked)
-        self.update_visible()
-
-    def onCheckbox_Received(self, state):
-        self.plot_received = (state == QtCore.Qt.Checked)
-        self.update_visible()
-
-    def onCheckbox_OutSymbols(self, state):
-        self.plot_outsymbols = (state == QtCore.Qt.Checked)
-        self.update_visible()
-
-    def onCheckbox_Matched(self, state):
-        self.use_matched = (state == QtCore.Qt.Checked)
-        self.compute_and_plot()
-
-    def set_sampling_instant(self, value):
-        self.sampling_instant = value
-        self.sampling_instant_text.setText(str(value))
-        self.sampling_instant_slider.setValue(int(value))
-
-    def onChange_SamplingText(self):
-        self.set_sampling_instant(int(self.sampling_instant_text.text()))
-        self.compute_and_plot()
-
-    def onChange_SamplingInstantSlider(self, val):
-        self.set_sampling_instant(val)
-        self.compute_and_plot(skip_fourier=True)
-
-    def onPlotPulse(self):
-        self.pulse_window = PulseWindow(self.pulse, parent=self)
+    def showWindowPulse(self):
+        self.pulse_window = WindowPulse(parent=self)
         self.pulse_window.exec_()
 
-    def onPlotEye(self):
-        self.eye_window = EyeWindow(self.r, self.s, self.sps, self.sampling_instant, parent=self)
+    def showWindowEye(self):
+        self.eye_window = WindowEye(parent=self)
         self.eye_window.exec_()
 
-    def compute_and_plot(self, *args, **kwargs):
-        self.compute(*args, **kwargs)
+    def compute_and_plot(self):
+        self.compute()
         self.plot()
 
-    def compute(self, skip_fourier=False):
-        self.pulse_formatter.pulse = self.pulse
-        self.pulse_formatter.symbol_rate = self.symbol_rate
-        self.pulse_formatter.sps = self.sps
-        self.matched_filter.pulse = self.pulse
-        self.matched_filter.sps = self.sps
-        self.channel_noise.sps = self.sps
-
-        np.random.seed(self.seed)
-
-        sps = self.sps  # samples per symbol
-        fs = sps * self.symbol_rate  # sampling frequency [Hz]
-        filt_len = self.filt_len  # filter length [Ts]
-        s_inst = self.sampling_instant/100  # sampling instant [Ts]
-
-        self.b = self.source.data()
-
-        M = len(self.b)
-        self.tk = np.arange(1, M + 1) + s_inst - 0.5
-
-        Nt = (M + 1) * sps
-        self.t = np.arange(0, Nt) / fs - 0.5*sps / fs
-
-        Nf = 2**16
-        self.f = np.arange(-Nf//2, Nf//2) * (fs/Nf)
-
-        self.x = self.signaling.encode(self.b)
-        self.s = self.pulse_formatter.encode(self.x, filt_len)
-        self.r = self.channel_noise.channel(self.channel_frequency.channel(self.s, fs))
-        if self.use_matched:
-            self.r = self.matched_filter.filter(self.r, filt_len)
-        self.y = self.r[(self.tk*sps).astype(int)]
-        self.x_hat = self.signaling.detect(self.y)
-        self.b_hat = self.signaling.decode(self.x_hat)
-
-        if not skip_fourier:
-            #~self.S = sp.fftpack.fftshift(sp.fftpack.fft(self.s, Nf)) / Nt
-            #~self.R = sp.fftpack.fftshift(sp.fftpack.fft(self.r, Nf)) / Nt
-            Ts = 1 / self.symbol_rate
-
-            _, self.psd_S = sp.signal.periodogram(self.s, fs, return_onesided=False, nfft=Nf)
-            self.psd_S = sp.fftpack.fftshift(self.psd_S)
-            self.psd_S = np.convolve(self.psd_S, np.ones(sps) / sps, mode='same')
-            _, self.psd_R = sp.signal.periodogram(self.r, fs, return_onesided=False, nfft=Nf)
-            self.psd_R = sp.fftpack.fftshift(self.psd_R)
-            self.psd_R = np.convolve(self.psd_R, np.ones(sps) / sps, mode='same')
-
-        self.ber = np.count_nonzero(self.b - self.b_hat) / M
+    def compute(self):
+        self.system.processData()
+        self.system.processSpectra()
+        self.system.processAxes()
 
     def plot(self):
-        Rs = self.symbol_rate  # symbol rate [baud]
-        Ts = 1 / Rs  # symbol duration [s]
-        M = len(self.tk)
+        Rs = self.system.symbol_rate
+        sps = self.system.sps
+        Ns = self.show_n_symbols
+        Ts = 1 / Rs
 
-        self.ax1 = self.figure.add_subplot(2, 1, 1)
-        self.ax2 = self.figure.add_subplot(2, 1 ,2)
-        self.ax1.cla()
-        self.ax2.cla()
+        ax_t = self.figure.add_subplot(2, 1, 1)
+        ax_t.cla()
+        ax_t.axhline(0.0, color='k')
+        ax_t.grid()
+        ax_t.margins(0.05)
+        #~ax_t.xaxis.set_ticks([k*Ts for k in range(Ns + 1)])
+        ax_t.set_xlim(-Ts/2, Ns*Ts + Ts/2)
+        ax_t.set_xlabel('$t$ [s]')
 
-        # plot data
-        self.ax1.axhline(0.0, color='k')
-        self.plot_s = self.ax1.plot(self.t, self.s, 'b', linewidth=2)
-        self.plot_r = self.ax1.plot(self.t, self.r, 'r', linewidth=2)
-        self.plot_x = self.ax1.stem(self.tk*Ts - Ts/2, self.x, markerfmt='bo', linefmt='b-', basefmt='b.')
-        self.plot_y = self.ax1.stem(self.tk*Ts - Ts/2, self.y, markerfmt='ro', linefmt='r-', basefmt='r.')
-        self.plot_S = self.ax2.plot(self.f, self.psd_S, 'b', linewidth=2)
-        self.plot_R = self.ax2.plot(self.f, self.psd_R, 'r', linewidth=2)
+        ax_f = self.figure.add_subplot(2, 1 ,2)
+        ax_f.cla()
+        ax_f.grid()
+        ax_f.margins(0.05)
+        ax_f.set_xlim(-6*Rs, 6*Rs)
+        ax_f.set_xlabel('$f$ [Hz]')
 
-        self.ax1.grid()
-        self.ax1.margins(0.05)
-        self.ax1.xaxis.set_ticks(np.arange(0, M+1)*Ts)
-        self.ax1.set_xlim(-Ts/2, M*Ts + Ts/2)
-        self.ax1.set_xlabel('$t$ [s]')
-
-        self.ax2.grid()
-        self.ax2.margins(0.05)
-        self.ax2.set_xlim(-6*Rs, 6*Rs)
-        self.ax2.set_xlabel('$f$ [Hz]')
-
-        self.ber_label.setText('BER: {:e}'.format(self.ber))
+        self.plots_t = []
+        self.plots_f = []
+        for (i, block) in enumerate(self.system.blocks):
+            connection = self.system_diagram.connections_d[i]
+            color = tuple(x / 255 for x in connection.color)
+            data_t = self.system.data_t[i]
+            data_f = self.system.data_f[i]
+            if block.out_type == 'C':
+                lines = ax_t.plot(self.system.t[:Ns*sps], data_t[:Ns*sps], color=color, linewidth=2)
+                self.plots_t.append(lines)
+                lines = ax_f.plot(self.system.f, data_f, color=color, linewidth=2)
+                self.plots_f.append(lines)
+            elif block.out_type == 'D':
+                (markerline, stemlines, baseline) = ax_t.stem(self.system.tk[:Ns], data_t[:Ns])
+                plt.setp(markerline, markerfacecolor=color)
+                plt.setp(stemlines, color=color)
+                plt.setp(baseline, visible=False)
+                self.plots_t.append((markerline, stemlines))
+                self.plots_f.append(None)
 
         plt.tight_layout()
         self.update_visible()
 
     def update_visible(self):
-        self.plot_s[0].set_visible(self.plot_sent)
-        self.plot_S[0].set_visible(self.plot_sent)
-
-        self.plot_r[0].set_visible(self.plot_received)
-        self.plot_R[0].set_visible(self.plot_received)
-
-        self.plot_x[0].set_visible(self.plot_insymbols)
-        for l in self.plot_x[1]:
-            l.set_visible(self.plot_insymbols)
-        self.plot_x[2].set_visible(self.plot_insymbols)
-
-        self.plot_y[0].set_visible(self.plot_outsymbols)
-        for l in self.plot_y[1]:
-            l.set_visible(self.plot_outsymbols)
-        self.plot_y[2].set_visible(self.plot_insymbols)
+        for i in range(len(self.system.blocks)):
+            connection = self.system_diagram.connections_d[i]
+            plt.setp(self.plots_t[i], visible=connection.visible)
+            if self.plots_f[i] is not None:
+                plt.setp(self.plots_f[i], visible=connection.visible)
 
         self.canvas.draw()
 
@@ -371,151 +278,38 @@ class Window(QtGui.QWidget):
         plt.close(self.figure)
 
 
-class GeneralOptionsPanel(QtGui.QWidget):
-    def __init__(self, parent=None):
+class PanelOptions(QtGui.QWidget):
+    def __init__(self, parent, label, obj, options):
         super().__init__(parent)
         self.parent = parent
-
-        self.options = {
-            'seed': ('Random Seed', 0),
-            'sps': ('Samples per symbol', 32),
-            'symbol_rate': ('Symbol rate [baud]', 1.0),
-            'filt_len': ('Filter length [Tb]', 256)
-        }
+        self.label = label
+        self.obj = obj
+        self.options = options
 
         self.initUI()
 
     def initUI(self):
         layout = QtGui.QFormLayout()
+        layout.addRow(QtGui.QLabel('<b>{}:</b>'.format(self.label)), QtGui.QWidget())
+
         self.text = {}
 
-        for key, val in self.options.items():
+        for key in self.options:
+            label = self.options[key]
             self.text[key] = QtGui.QLineEdit()
-            layout.addRow(val[0] + ':', self.text[key])
-            self.set_text(key, val[1])
+            self.text[key].setText(str(getattr(self.obj, key)))
             self.text[key].editingFinished.connect(lambda key=key: self.onChange_text(key))
+            layout.addRow(label + ':', self.text[key])
 
         self.setLayout(layout)
-
-    def set_text(self, key, value):
-        setattr(self.parent, key, value)
-        self.text[key].setText(str(value))
 
     def onChange_text(self, key):
-        type_ = type(self.options[key][1])
-        new_value = type_(self.text[key].text())
-        if new_value != getattr(self.parent, key):
-            self.set_text(key, new_value)
+        old_value = getattr(self.obj, key)
+        new_value = (type(old_value))(self.text[key].text())
+        if new_value != old_value:
+            self.text[key].setText(str(new_value))
+            setattr(self.obj, key, new_value)
             self.parent.compute_and_plot()
-        else:
-            self.set_text(key, new_value)
-
-
-class PulseWindow(QtGui.QDialog):
-    def __init__(self, pulse, parent=None):
-        super().__init__(parent)
-        self.pulse = pulse
-        self.parent = parent
-        self.initUI()
-
-    def initUI(self):
-        self.setWindowTitle('Pulse')
-
-        # Figure
-        self.figure = plt.figure()
-        self.canvas = FigureCanvas(self.figure)
-        self.toolbar = NavigationToolbar(self.canvas, self)
-
-        layout = QtGui.QVBoxLayout()
-        layout.addWidget(self.toolbar)
-        layout.addWidget(self.canvas)
-
-        self.setLayout(layout)
-        self.resize(800, 400)
-
-        self.plot()
-
-    def plot(self):
-        ax1 = self.figure.add_subplot(1, 2, 1)
-        ax2 = self.figure.add_subplot(1, 2, 2)
-
-        sps, filt_len = self.parent.sps, self.parent.filt_len
-        N = sps * filt_len // 2
-        tx = np.arange(-N, N) / sps
-        fx = np.arange(-N, N) * (sps / N)
-
-        p = self.pulse.pulse(tx)
-        P = sp.fftpack.fftshift(sp.fftpack.fft(p)) / sps
-
-        ax1.plot(tx, p, 'k-', linewidth=2)
-        ax2.plot(fx, abs(P), 'k-', linewidth=2)
-
-        ax1.grid()
-        ax1.margins(0.05)
-        ax1.set_xlim(-self.pulse.tx_lim, self.pulse.tx_lim)
-        ax1.set_xlabel('$t / T_\mathrm{b}$')
-        ax2.grid()
-        ax2.margins(0.05)
-        ax2.set_xlim(-self.pulse.fx_lim, self.pulse.fx_lim)
-        ax2.set_xlabel('$f / R_\mathrm{b}$')
-
-        plt.tight_layout()
-        self.canvas.draw()
-
-    def closeEvent(self, event):
-        plt.close(self.figure)
-
-
-class EyeWindow(QtGui.QDialog):
-    def __init__(self, r, s, sps, sampling_instant, parent=None):
-        super().__init__(parent)
-        self.r = r
-        self.s = s
-        self.sps = sps
-        self.s_inst = sampling_instant/100
-        self.initUI()
-
-    def initUI(self):
-        self.setWindowTitle('Eye diagram')
-
-        # Figure
-        self.figure = plt.figure()
-        self.canvas = FigureCanvas(self.figure)
-        self.toolbar = NavigationToolbar(self.canvas, self)
-
-        layout = QtGui.QVBoxLayout()
-        layout.addWidget(self.toolbar)
-        layout.addWidget(self.canvas)
-
-        self.setLayout(layout)
-        self.resize(400, 400)
-
-        self.plot()
-
-    def plot(self):
-        ax = self.figure.add_subplot(1, 1, 1)
-
-        sps = self.sps
-        t = np.arange(-2, sps + 2) / sps
-        M = len(self.r) // sps
-
-        ax.axhline(0.0, color='k')
-        ax.axvline(self.s_inst, color='k', linewidth=2)
-
-        for i in range(M - 1):
-            ax.plot(t, self.s[i*sps + sps//2 - 2: (i+1)*sps + sps//2 + 2], 'b-', linewidth=2)
-            ax.plot(t, self.r[i*sps + sps//2 - 2: (i+1)*sps + sps//2 + 2], 'r-', linewidth=2)
-
-        ax.grid()
-        ax.margins(0.05)
-        ax.xaxis.set_ticks([0.00, 0.25, 0.50, 0.75, 1.00])
-        ax.set_xlabel('$t / T_\mathrm{b}$')
-
-        plt.tight_layout()
-        self.canvas.draw()
-
-    def closeEvent(self, event):
-        plt.close(self.figure)
 
 
 if __name__ == '__main__':
