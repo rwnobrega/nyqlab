@@ -124,6 +124,21 @@ class Window(QtGui.QWidget):
         self.canvas = FigureCanvas(self.figure)
         self.toolbar = NavigationToolbar(self.canvas, self)
 
+        # Axis
+        self.ax_t = self.figure.add_subplot(2, 1, 1)
+        self.ax_t.grid(True)
+        self.ax_t.margins(0.05)
+        self.ax_t.set_xlabel('$t$ [s]')
+
+        self.ax_f = self.figure.add_subplot(2, 1 ,2)
+        self.ax_f.grid(True)
+        self.ax_f.margins(0.05)
+        self.ax_f.set_xlabel('$f$ [Hz]')
+
+        n_blocks_d = len(self.system_diagram.blocks_d)
+        self.plots_t = [None] * n_blocks_d
+        self.plots_f = [None] * n_blocks_d
+
         # Construct widgets for block options
         self.block_options = []
         self.block_choices = []
@@ -226,41 +241,29 @@ class Window(QtGui.QWidget):
         Ns = self.show_n_symbols
         Ts = 1 / Rs
 
-        ax_t = self.figure.add_subplot(2, 1, 1)
-        ax_t.cla()
-        ax_t.axhline(0.0, color='k')
-        ax_t.grid()
-        ax_t.margins(0.05)
-        #~ax_t.xaxis.set_ticks([k*Ts for k in range(Ns + 1)])
-        ax_t.set_xlim(-Ts/2, Ns*Ts + Ts/2)
-        ax_t.set_xlabel('$t$ [s]')
+        self.ax_t.lines = []
+        self.ax_f.lines = []
 
-        ax_f = self.figure.add_subplot(2, 1 ,2)
-        ax_f.cla()
-        ax_f.grid()
-        ax_f.margins(0.05)
-        ax_f.set_xlim(-6*Rs, 6*Rs)
-        ax_f.set_xlabel('$f$ [Hz]')
+        self.ax_t.axhline(0.0, color='k')
+        self.ax_f.axhline(0.0, color='k')
 
-        self.plots_t = []
-        self.plots_f = []
         for (i, block) in enumerate(self.system.blocks):
             connection = self.system_diagram.connections_d[i]
             color = tuple(x / 255 for x in connection.color)
             data_t = self.system.data_t[i]
             data_f = self.system.data_f[i]
             if block.out_type == 'C':
-                lines = ax_t.plot(self.system.t[:Ns*sps], data_t[:Ns*sps], color=color, linewidth=2)
-                self.plots_t.append(lines)
-                lines = ax_f.plot(self.system.f, data_f, color=color, linewidth=2)
-                self.plots_f.append(lines)
+                lines = self.ax_t.plot(self.system.t[:Ns*sps], data_t[:Ns*sps], color=color, linewidth=2)
+                self.plots_t[i] = lines
+                lines = self.ax_f.plot(self.system.f, data_f, color=color, linewidth=2)
+                self.plots_f[i] = lines
             elif block.out_type == 'D':
-                (markerline, stemlines, baseline) = ax_t.stem(self.system.tk[:Ns], data_t[:Ns])
+                (markerline, stemlines, baseline) = self.ax_t.stem(self.system.tk[:Ns], data_t[:Ns])
                 plt.setp(markerline, markerfacecolor=color)
                 plt.setp(stemlines, color=color)
                 plt.setp(baseline, visible=False)
-                self.plots_t.append((markerline, stemlines))
-                self.plots_f.append(None)
+                self.plots_t[i] = (markerline, stemlines)
+                self.plots_f[i] = None
 
         plt.tight_layout()
         self.update_visible()
