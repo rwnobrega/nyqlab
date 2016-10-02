@@ -25,11 +25,10 @@ class Simple_Sampler(Sampler):
     sampling_instant = 50
 
     def sampling_instants(self, r):
-        delay = self.system.delay
         sps = self.system.sps
         Ns = self.system.n_symbols
         s_inst = self.sampling_instant / 100
-        tk = np.arange(round(s_inst * sps) + delay, len(r), step=sps)
+        tk = np.arange(round(s_inst * sps), len(r), step=sps)
         return tk[:Ns]
 
     def process(self, r):

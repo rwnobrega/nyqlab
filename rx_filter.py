@@ -1,6 +1,4 @@
 import numpy as np
-import scipy as sp
-import scipy.signal
 
 from PyQt4 import QtCore, QtGui
 
@@ -38,14 +36,15 @@ class MatchedFilter_ReceiveFilter(ReceiveFilter):
         pulse = self.system.pulse
         sps = self.system.sps
         filt_len = pulse.filt_len
-        N = sps * filt_len // 2
 
-        tx = np.arange(-N, N + 1) / sps
+        tx = np.arange(sps * filt_len) / sps
 
-        p = pulse.pulse(-tx)
+        p = pulse.pulse(-tx + filt_len)
         p /= np.sum(np.abs(p)**2) / sps
 
-        return sp.signal.fftconvolve(y, p, mode='same') / sps
+        r = np.convolve(y, p) / sps
+
+        return r[:len(y)]
 
 
 choices = [

@@ -6,8 +6,8 @@ from PyQt4 import QtCore, QtGui
 
 
 class Pulse:
-    tx_lim, fx_lim = 1.5, 15.0
-    filt_len = int(2 * tx_lim)
+    tx_lim, fx_lim = 1.0, 15.0
+    filt_len = 1
 
     def widget(self):
         try:
@@ -29,22 +29,22 @@ class Pulse_Widget(QtGui.QWidget):
 
 class RectangularNRZ_Pulse(Pulse):
     def pulse(self, tx):
-        return 1.0*((-0.5 <= tx) & (tx < 0.5))
+        return 1.0 * ((0.0 <= tx) & (tx < 1.0))
 
 
 class RectangularRZ_Pulse(Pulse):
     def pulse(self, tx):
-        return 1.0*((-0.25 <= tx) & (tx < 0.25))
+        return 1.0 * ((0.0 <= tx) & (tx < 0.5))
 
 
 class Manchester_Pulse(Pulse):
     def pulse(self, tx):
-        return 1.0*((-0.5 <= tx) & (tx < 0.0)) - 1.0*((0.0 <= tx) & (tx < 0.5))
+        return 1.0 * ((0.0 <= tx) & (tx < 0.5)) - 1.0*((0.5 <= tx) & (tx < 1.0))
 
 
 class Triangular_Pulse(Pulse):
     def pulse(self, tx):
-        return (1.0 - abs(2.0*tx))*((-0.5 <= tx) & (tx < 0.5))
+        return (1.0 - abs(2.0*tx - 1.0)) * ((0.0 <= tx) & (tx < 1.0))
 
 
 class Sinc_Pulse(Pulse):
@@ -52,8 +52,10 @@ class Sinc_Pulse(Pulse):
 
     def __init__(self, filt_len=64):
         self.filt_len = filt_len
+        self.t0 = filt_len//2
 
     def pulse(self, tx):
+        tx -= self.t0
         return np.sinc(tx)
 
 
@@ -79,8 +81,10 @@ class SquaredSinc_Pulse(Pulse):
 
     def __init__(self, filt_len=32):
         self.filt_len = filt_len
+        self.t0 = filt_len//2
 
     def pulse(self, tx):
+        tx -= self.t0
         return np.sinc(tx)**2
 
 
@@ -94,8 +98,10 @@ class RaisedCosine_Pulse(Pulse):
     def __init__(self, filt_len=64, rolloff=0.5):
         self.filt_len = filt_len
         self.rolloff = rolloff
+        self.t0 = filt_len//2
 
     def pulse(self, tx):
+        tx -= self.t0
         r = self.rolloff + 1.0e-12  # Because of numerical issues
         L = self.filt_len
         p = np.sinc(tx) * (np.cos(np.pi*r*tx)) / (1.0 - 4.0 * r**2 * tx**2)
@@ -153,8 +159,10 @@ class RootRaisedCosine_Pulse(Pulse):
     def __init__(self, filt_len=64, rolloff=0.5):
         self.filt_len = filt_len
         self.rolloff = rolloff
+        self.t0 = filt_len//2
 
     def pulse(self, tx):
+        tx -= self.t0
         r = self.rolloff + 1.0e-12  # Because of numerical issues
 
         @np.vectorize

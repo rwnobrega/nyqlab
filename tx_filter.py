@@ -1,6 +1,4 @@
 import numpy as np
-import scipy as sp
-import scipy.signal
 
 from PyQt4 import QtCore, QtGui
 
@@ -33,17 +31,18 @@ class PulseFormatter_TransmitFilter(TransmitFilter):
         self.system.pulse = self.pulse
         sps = self.system.sps
         filt_len = self.pulse.filt_len
-        N = sps * filt_len // 2
+        N = sps * filt_len
+        n0 = (N - sps) // 2
 
-        tx = np.arange(-N, N + 1) / sps
+        tx = np.arange(N) / sps
 
         p = self.pulse.pulse(tx)
-        w = np.zeros(len(x) * sps)
-        w[: : sps] = x
+        w = np.zeros((len(x) + 2) * sps)
+        w[sps : -sps : sps] = x
 
-        s = sp.signal.fftconvolve(w, p)
+        s = np.convolve(w, p)
 
-        return s[N - sps : -N]
+        return s[n0 : len(w) + n0]
 
 
 class PulseFormatter_TransmitFilter_Widget(TransmitFilter_Widget):

@@ -1,5 +1,6 @@
 import numpy as np
 import scipy as sp
+import scipy.signal
 
 
 class Block:
@@ -51,8 +52,8 @@ class SystemSimulator:
         Ns = self.n_symbols
         instants = self.instants
 
-        Nt = (Ns + 1) * sps
-        self.t = np.arange(Nt) / fa - 0.5 * Ts
+        Nt = (Ns + 2) * sps
+        self.t = np.arange(Nt) / fa - Ts
         self.tk = self.t[instants]
         self.f = np.arange(-Nf//2, Nf//2) * (fa / Nf)
 
@@ -77,4 +78,3 @@ class SystemSimulator:
     def update_secondary_properties(self):
         self.symbol_rate = self.bit_rate * 1  # TODO: So far, binary only...
         self.samp_freq = self.sps * self.symbol_rate
-        self.delay = (self.sps + 1) // 2

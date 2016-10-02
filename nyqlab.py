@@ -117,6 +117,9 @@ class Window(QtGui.QWidget):
         return widget, block_choice
 
     def initUI(self):
+        Ns = self.show_n_symbols
+        Ts = 1 / self.system.symbol_rate
+
         self.setWindowTitle('NyqLab')
 
         # Figure
@@ -129,6 +132,7 @@ class Window(QtGui.QWidget):
         self.ax_t.grid(True)
         self.ax_t.margins(0.05)
         self.ax_t.set_xlabel('$t$ [s]')
+        self.ax_t.set_xlim([-Ts, (Ns + 1)*Ts])
 
         self.ax_f = self.figure.add_subplot(2, 1 ,2)
         self.ax_f.grid(True)
@@ -236,11 +240,6 @@ class Window(QtGui.QWidget):
         self.system.processAxes()
 
     def plot(self):
-        Rs = self.system.symbol_rate
-        sps = self.system.sps
-        Ns = self.show_n_symbols
-        Ts = 1 / Rs
-
         self.ax_t.lines = []
         self.ax_f.lines = []
 
@@ -253,19 +252,19 @@ class Window(QtGui.QWidget):
             data_t = self.system.data_t[i]
             data_f = self.system.data_f[i]
             if block.out_type == 'C':
-                lines = self.ax_t.plot(self.system.t[:Ns*sps], data_t[:Ns*sps], color=color, linewidth=2)
+                lines = self.ax_t.plot(self.system.t, data_t, color=color, linewidth=2)
                 self.plots_t[i] = lines
                 lines = self.ax_f.plot(self.system.f, data_f, color=color, linewidth=2)
                 self.plots_f[i] = lines
             elif block.out_type == 'D':
-                (markerline, stemlines, baseline) = self.ax_t.stem(self.system.tk[:Ns], data_t[:Ns])
+                (markerline, stemlines, baseline) = self.ax_t.stem(self.system.tk, data_t)  # Slow
+                #~(markerline, stemlines, baseline) = self.ax_t.stem(self.system.tk[:Ns], data_t[:Ns])  # Faster
                 plt.setp(markerline, markerfacecolor=color)
                 plt.setp(stemlines, color=color)
                 plt.setp(baseline, visible=False)
                 self.plots_t[i] = (markerline, stemlines)
                 self.plots_f[i] = None
 
-        plt.tight_layout()
         self.update_visible()
 
     def update_visible(self):
