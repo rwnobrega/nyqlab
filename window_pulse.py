@@ -36,26 +36,28 @@ class WindowPulse(QtGui.QDialog):
         sps = self.parent.system.sps
         filt_len = self.parent.system.pulse.filt_len
 
+        Nt = (filt_len + 2) * sps
+        Nf = max(1024, Nt)
+
+        tx = np.arange(-sps, Nt - sps) / sps
+        fx = np.arange(-Nf//2, Nf//2) * (sps / Nf)
+
+        p = pulse.pulse(tx)
+        P = sp.fftpack.fftshift(sp.fftpack.fft(p, Nf)) / sps
+
         ax_t = self.figure.add_subplot(1, 2, 1)
         ax_f = self.figure.add_subplot(1, 2, 2)
 
-        N = sps * filt_len // 2
-        tx = np.arange(-N, N) / sps
-        fx = np.arange(-N, N) * (sps / N)
-
-        p = pulse.pulse(tx)
-        P = sp.fftpack.fftshift(sp.fftpack.fft(p)) / sps
-
-        ax_t.plot(tx, p, 'k-', linewidth=2)
+        ax_t.plot(tx + filt_len//2, p, 'k-', linewidth=2)
         ax_f.plot(fx, abs(P), 'k-', linewidth=2)
 
-        ax_t.grid()
+        ax_t.grid(True)
         ax_t.margins(0.05)
-        ax_t.set_xlim(-pulse.tx_lim, pulse.tx_lim)
+        ax_t.set_xlim(pulse.tx_lim)
         ax_t.set_xlabel('$t / T_\mathrm{s}$')
-        ax_f.grid()
+        ax_f.grid(True)
         ax_f.margins(0.05)
-        ax_f.set_xlim(-pulse.fx_lim, pulse.fx_lim)
+        ax_f.set_xlim(pulse.fx_lim)
         ax_f.set_xlabel('$f / R_\mathrm{s}$')
 
         plt.tight_layout()

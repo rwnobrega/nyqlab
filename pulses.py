@@ -6,8 +6,9 @@ from PyQt4 import QtCore, QtGui
 
 
 class Pulse:
-    tx_lim, fx_lim = 1.0, 15.0
     filt_len = 1
+    tx_lim = (-0.5, 1.5)
+    fx_lim = (-15.0, 15.0)
 
     def widget(self):
         try:
@@ -48,15 +49,19 @@ class Triangular_Pulse(Pulse):
 
 
 class Sinc_Pulse(Pulse):
-    tx_lim, fx_lim = 15.0, 1.5
-
     def __init__(self, filt_len=64):
         self.filt_len = filt_len
-        self.t0 = filt_len//2
+        self.update_properties()
 
     def pulse(self, tx):
-        tx -= self.t0
-        return np.sinc(tx)
+        t0 = self.filt_len / 2
+        tx -= t0
+        return np.sinc(tx) * ((-t0 <= tx) & (tx < t0))
+
+    def update_properties(self):
+        filt_len = self.filt_len
+        self.tx_lim = (filt_len / 2 - 15.0, filt_len / 2 + 15.0)
+        self.fx_lim = (-1.5, 1.5)
 
 
 class Sinc_Pulse_Widget(Pulse_Widget):
@@ -72,20 +77,25 @@ class Sinc_Pulse_Widget(Pulse_Widget):
 
     def onChange_text_filt_len(self):
         self.pulse.filt_len = int(self.text_filt_len.text())
+        self.pulse.update_properties()
         self.text_filt_len.setText(str(self.pulse.filt_len))
         self.update_signal.emit()
 
 
 class SquaredSinc_Pulse(Pulse):
-    tx_lim, fx_lim = 10.0, 2.5
-
-    def __init__(self, filt_len=32):
+    def __init__(self, filt_len=64):
         self.filt_len = filt_len
-        self.t0 = filt_len//2
+        self.update_properties()
 
     def pulse(self, tx):
-        tx -= self.t0
-        return np.sinc(tx)**2
+        t0 = self.filt_len / 2
+        tx -= t0
+        return np.sinc(tx)**2 * ((-t0 <= tx) & (tx < t0))
+
+    def update_properties(self):
+        filt_len = self.filt_len
+        self.tx_lim = (filt_len / 2 - 7.5, filt_len / 2 + 7.5)
+        self.fx_lim = (-1.5, 1.5)
 
 
 class SquaredSinc_Pulse_Widget(Sinc_Pulse_Widget):
@@ -93,19 +103,22 @@ class SquaredSinc_Pulse_Widget(Sinc_Pulse_Widget):
 
 
 class RaisedCosine_Pulse(Pulse):
-    tx_lim, fx_lim = 10.0, 2.5
-
     def __init__(self, filt_len=64, rolloff=0.5):
         self.filt_len = filt_len
         self.rolloff = rolloff
-        self.t0 = filt_len//2
+        self.update_properties()
 
     def pulse(self, tx):
-        tx -= self.t0
+        t0 = self.filt_len / 2
+        tx -= t0
         r = self.rolloff + 1.0e-12  # Because of numerical issues
-        L = self.filt_len
         p = np.sinc(tx) * (np.cos(np.pi*r*tx)) / (1.0 - 4.0 * r**2 * tx**2)
-        return ((-L//2 <= tx) & (tx <= L)) * p
+        return p * ((-t0 <= tx) & (tx < t0))
+
+    def update_properties(self):
+        filt_len = self.filt_len
+        self.tx_lim = (filt_len / 2 - 7.5, filt_len / 2 + 7.5)
+        self.fx_lim = (-1.5, 1.5)
 
 
 class RaisedCosine_Pulse_Widget(Pulse_Widget):
@@ -137,6 +150,7 @@ class RaisedCosine_Pulse_Widget(Pulse_Widget):
 
     def onChange_text_filt_len(self):
         self.pulse.filt_len = int(self.text_filt_len.text())
+        self.pulse.update_properties()
         self.text_filt_len.setText(str(self.pulse.filt_len))
         self.update_signal.emit()
 
@@ -154,15 +168,15 @@ class RaisedCosine_Pulse_Widget(Pulse_Widget):
 
 
 class RootRaisedCosine_Pulse(Pulse):
-    tx_lim, fx_lim = 10.0, 2.5
-
     def __init__(self, filt_len=64, rolloff=0.5):
         self.filt_len = filt_len
         self.rolloff = rolloff
-        self.t0 = filt_len//2
+        self.update_properties()
 
     def pulse(self, tx):
-        tx -= self.t0
+        t0 = self. filt_len / 2
+
+        tx -= t0
         r = self.rolloff + 1.0e-12  # Because of numerical issues
 
         @np.vectorize
@@ -172,7 +186,14 @@ class RootRaisedCosine_Pulse(Pulse):
             else:
                 return (np.sin(np.pi*(1.0 - r)*tx) + (4.0*r*tx)*np.cos(np.pi*(1.0 + r)*tx)) / (np.pi*tx*(1.0 - (4.0*r*tx)**2))
 
-        return _pulse(tx)
+        p = _pulse(tx) * ((-t0 <= tx) & (tx < t0))
+
+        return p
+
+    def update_properties(self):
+        filt_len = self.filt_len
+        self.tx_lim = (filt_len / 2 - 7.5, filt_len / 2 + 7.5)
+        self.fx_lim = (-1.5, 1.5)
 
 
 class RootRaisedCosine_Pulse_Widget(RaisedCosine_Pulse_Widget):
