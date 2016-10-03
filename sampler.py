@@ -22,13 +22,13 @@ class Sampler_Widget(QtGui.QWidget):
 # Samplers
 
 class Simple_Sampler(Sampler):
-    sampling_instant = 50
+    sampling_instant = 0
 
     def sampling_instants(self, r):
         sps = self.system.sps
         Ns = self.system.n_symbols
         s_inst = self.sampling_instant / 100
-        tk = np.arange(round(s_inst * sps), len(r), step=sps)
+        tk = np.arange(round(s_inst * sps), len(r), step=sps) + sps
         return tk[:Ns]
 
     def process(self, r):
@@ -43,7 +43,7 @@ class Simple_Sampler_Widget(Sampler_Widget):
         self.sampling_instant_text.editingFinished.connect(self.onChange_text)
 
         self.sampling_instant_slider = QtGui.QSlider(QtCore.Qt.Horizontal)
-        self.sampling_instant_slider.setRange(0, 100)
+        self.sampling_instant_slider.setRange(-50, 50)
         self.sampling_instant_slider.setValue(self.sampler.sampling_instant)
         self.sampling_instant_slider.valueChanged[int].connect(self.onChange_slider)
 

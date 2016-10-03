@@ -36,15 +36,16 @@ class MatchedFilter_ReceiveFilter(ReceiveFilter):
         pulse = self.system.pulse
         sps = self.system.sps
         filt_len = pulse.filt_len
+        N = sps * filt_len
 
-        tx = np.arange(sps * filt_len) / sps
+        tx = np.arange(N) / sps
 
         p = pulse.pulse(-tx + filt_len)
         p /= np.sum(np.abs(p)**2) / sps
 
         r = np.convolve(y, p) / sps
 
-        return r[:len(y)]
+        return r[N//2 : len(y) + N//2]
 
 
 choices = [

@@ -32,7 +32,6 @@ class PulseFormatter_TransmitFilter(TransmitFilter):
         sps = self.system.sps
         filt_len = self.pulse.filt_len
         N = sps * filt_len
-        n0 = (N - sps) // 2
 
         tx = np.arange(N) / sps
 
@@ -42,7 +41,7 @@ class PulseFormatter_TransmitFilter(TransmitFilter):
 
         s = np.convolve(w, p)
 
-        return s[n0 : len(w) + n0]
+        return s[N//2 : len(w) + N//2]
 
 
 class PulseFormatter_TransmitFilter_Widget(TransmitFilter_Widget):
