@@ -117,9 +117,6 @@ class Window(QtGui.QWidget):
         return widget, block_choice
 
     def initUI(self):
-        Ns = self.show_n_symbols
-        Ts = 1 / self.system.symbol_rate
-
         self.setWindowTitle('NyqLab')
 
         # Figure
@@ -128,20 +125,7 @@ class Window(QtGui.QWidget):
         self.toolbar = NavigationToolbar(self.canvas, self)
 
         # Axis
-        self.ax_t = self.figure.add_subplot(2, 1, 1)
-        self.ax_t.grid(True)
-        self.ax_t.margins(0.05)
-        self.ax_t.set_xlabel('$t$ [s]')
-        self.ax_t.set_xlim([-Ts, (Ns + 1)*Ts])
-
-        self.ax_f = self.figure.add_subplot(2, 1 ,2)
-        self.ax_f.grid(True)
-        self.ax_f.margins(0.05)
-        self.ax_f.set_xlabel('$f$ [Hz]')
-
-        n_blocks_d = len(self.system_diagram.blocks_d)
-        self.plots_t = [None] * n_blocks_d
-        self.plots_f = [None] * n_blocks_d
+        self.update_axis()
 
         # Construct widgets for block options
         self.block_options = []
@@ -239,6 +223,25 @@ class Window(QtGui.QWidget):
         self.system.processSpectra()
         self.system.processAxes()
 
+    def update_axis(self):
+        Ns = self.show_n_symbols
+        Ts = 1 / self.system.symbol_rate
+
+        self.ax_t = self.figure.add_subplot(2, 1, 1)
+        self.ax_t.grid(True)
+        self.ax_t.margins(0.05)
+        self.ax_t.set_xlabel('$t$ [s]')
+        self.ax_t.set_xlim([-Ts, Ns*Ts])
+
+        self.ax_f = self.figure.add_subplot(2, 1 ,2)
+        self.ax_f.grid(True)
+        self.ax_f.margins(0.05)
+        self.ax_f.set_xlabel('$f$ [Hz]')
+
+        n_blocks_d = len(self.system_diagram.blocks_d)
+        self.plots_t = [None] * n_blocks_d
+        self.plots_f = [None] * n_blocks_d
+
     def plot(self):
         self.ax_t.lines = []
         self.ax_f.lines = []
@@ -311,6 +314,7 @@ class PanelOptions(QtGui.QWidget):
         if new_value != old_value:
             self.text[key].setText(str(new_value))
             setattr(self.obj, key, new_value)
+            self.parent.update_axis()
             self.parent.compute_and_plot()
 
 
