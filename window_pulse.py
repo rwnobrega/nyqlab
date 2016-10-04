@@ -48,7 +48,10 @@ class WindowPulse(QtGui.QDialog):
         ax_t = self.figure.add_subplot(1, 2, 1)
         ax_f = self.figure.add_subplot(1, 2, 2)
 
-        ax_t.plot(tx + filt_len//2, p, 'k-', linewidth=2)
+        if pulse.is_square:
+            ax_t.step(tx + filt_len//2, p, 'k-', linewidth=2, where='post')
+        else:
+            ax_t.plot(tx + filt_len//2, p, 'k-', linewidth=2)
         ax_f.plot(fx, abs(P), 'k-', linewidth=2)
 
         ax_t.grid(True)
