@@ -35,17 +35,19 @@ class MatchedFilter_ReceiveFilter(ReceiveFilter):
     def process(self, y):
         pulse = self.system.pulse
         sps = self.system.sps
+        fa = self.system.samp_freq
         filt_len = pulse.filt_len
         N = sps * filt_len
+        delay = (N - 1) / fa
 
         tx = np.arange(N) / sps
 
-        p = pulse.pulse(-tx + filt_len)
+        p = pulse.pulse(-tx + delay)
         p /= np.sum(np.abs(p)**2) / sps
 
         r = np.convolve(y, p) / sps
 
-        return r[N//2 : len(y) + N//2]
+        return r[N//2 - 1: len(y) + N//2 - 1]
 
 
 choices = [
