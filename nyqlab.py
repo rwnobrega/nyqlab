@@ -257,11 +257,8 @@ class Window(QtGui.QWidget):
 
         self.plots_t = []
         self.plots_f = []
-        for (i, block) in enumerate(self.system.blocks):
-            connection = self.system_diagram.connections_d[i]
+        for (data_t, data_f, block, connection) in zip(self.system.data_t, self.system.data_f, self.system.blocks, self.system_diagram.connections_d):
             color = tuple(x / 255 for x in connection.color)
-            data_t = self.system.data_t[i]
-            data_f = self.system.data_f[i]
             if block.out_type == 'C':
                 lines_t = [self.ax_t.plot(self.system.t, data_t, color=color, linewidth=2)]
                 lines_f = [self.ax_f.plot(self.system.f, data_f, color=color, linewidth=2)]
