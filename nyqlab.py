@@ -278,14 +278,8 @@ class Window(QtGui.QWidget):
         self.update_visible()
 
     def update_visible(self):
-        for i in range(len(self.system.blocks)):
-            connection = self.system_diagram.connections_d[i]
-            for lines in self.plots_t[i]:
-                plt.setp(lines, visible=connection.visible)
-            for lines in self.plots_f[i]:
-                plt.setp(lines, visible=connection.visible)
-
-
+        for (lines_t, lines_f, connection) in zip(self.plots_t, self.plots_f, self.system_diagram.connections_d):
+            plt.setp(lines_t + lines_f, visible=connection.visible)
         self.canvas.draw()
 
     def closeEvent(self, event):
