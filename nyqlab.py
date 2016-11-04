@@ -129,7 +129,7 @@ class Window(QtGui.QWidget):
         # Axis
         self.ax_t = self.figure.add_subplot(2, 1, 1)
         self.ax_f = self.figure.add_subplot(2, 1, 2)
-        self.update_axis()
+        self.update_axis(True)
 
         # Construct widgets for block options
         self.block_options = []
@@ -227,31 +227,36 @@ class Window(QtGui.QWidget):
         self.system.processSpectra()
         self.system.processAxes()
 
-    def update_axis(self):
+    def update_axis(self, first_run=False):
         Ns = self.show_n_symbols
         Ts = 1 / self.system.symbol_rate
+
+        if first_run:
+            axis_t = [-Ts, Ns*Ts, -1.5, 1.5]
+            axis_f = [-5.0, 5.0, -0.5, 6.0]
+        else:
+            axis_t = self.ax_t.axis()
+            axis_f = self.ax_f.axis()
 
         self.ax_t.cla()
         self.ax_t.grid(True)
         self.ax_t.margins(0.05)
         self.ax_t.set_xlabel('$t$ [s]')
-        self.ax_t.set_xlim([-Ts, Ns*Ts])
         self.ax_t.axhline(0.0, color='k')
+        self.ax_t.axis(axis_t)
 
         self.ax_f.cla()
-        self.ax_f = self.figure.add_subplot(2, 1 ,2)
         self.ax_f.grid(True)
         self.ax_f.margins(0.05)
         self.ax_f.set_xlabel('$f$ [Hz]')
         self.ax_f.axhline(0.0, color='k')
-
-        n_blocks_d = len(self.system_diagram.blocks_d)
-        self.plots_t = [None] * n_blocks_d
-        self.plots_f = [None] * n_blocks_d
+        self.ax_f.axis(axis_f)
 
     def plot(self):
         self.update_axis()
 
+        self.plots_t = []
+        self.plots_f = []
         for (i, block) in enumerate(self.system.blocks):
             connection = self.system_diagram.connections_d[i]
             color = tuple(x / 255 for x in connection.color)
@@ -259,16 +264,16 @@ class Window(QtGui.QWidget):
             data_f = self.system.data_f[i]
             if block.out_type == 'C':
                 lines = self.ax_t.plot(self.system.t, data_t, color=color, linewidth=2)
-                self.plots_t[i] = [lines]
+                self.plots_t.append([lines])
                 lines = self.ax_f.plot(self.system.f, data_f, color=color, linewidth=2)
-                self.plots_f[i] = [lines]
+                self.plots_f.append([lines])
             elif block.out_type == 'D':
                 x = np.repeat(self.system.tk, 2)
                 y = np.dstack((np.zeros(data_t.shape[0]), data_t)).flatten()
                 lines0 = self.ax_t.step(x, y, color=color, linewidth=1)
                 lines1 = self.ax_t.scatter(x[1::2], y[1::2], color=color, linewidth=3)
-                self.plots_t[i] = [lines0, lines1]
-                self.plots_f[i] = []
+                self.plots_t.append([lines0, lines1])
+                self.plots_f.append([])
 
         self.update_visible()
 
@@ -318,7 +323,7 @@ class PanelOptions(QtGui.QWidget):
         if new_value != old_value:
             self.text[key].setText(str(new_value))
             setattr(self.obj, key, new_value)
-            self.parent.update_axis()
+            self.parent.update_axis(True)
             self.parent.compute_and_plot()
 
 
