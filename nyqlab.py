@@ -263,17 +263,16 @@ class Window(QtGui.QWidget):
             data_t = self.system.data_t[i]
             data_f = self.system.data_f[i]
             if block.out_type == 'C':
-                lines = self.ax_t.plot(self.system.t, data_t, color=color, linewidth=2)
-                self.plots_t.append([lines])
-                lines = self.ax_f.plot(self.system.f, data_f, color=color, linewidth=2)
-                self.plots_f.append([lines])
+                lines_t = [self.ax_t.plot(self.system.t, data_t, color=color, linewidth=2)]
+                lines_f = [self.ax_f.plot(self.system.f, data_f, color=color, linewidth=2)]
             elif block.out_type == 'D':
                 x = np.repeat(self.system.tk, 2)
                 y = np.dstack((np.zeros(data_t.shape[0]), data_t)).flatten()
-                lines0 = self.ax_t.step(x, y, color=color, linewidth=1)
-                lines1 = self.ax_t.scatter(x[1::2], y[1::2], color=color, linewidth=3)
-                self.plots_t.append([lines0, lines1])
-                self.plots_f.append([])
+                lines_t = [self.ax_t.step(x, y, color=color, linewidth=1),
+                           self.ax_t.scatter(x[1::2], y[1::2], color=color, linewidth=3)]
+                lines_f = []
+            self.plots_t.append(lines_t)
+            self.plots_f.append(lines_f)
 
         self.update_visible()
 
