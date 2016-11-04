@@ -4,6 +4,8 @@ import functools
 import os
 import sys
 
+import numpy as np
+
 from PyQt4 import QtCore, QtGui
 
 import matplotlib.pyplot as plt
@@ -125,6 +127,8 @@ class Window(QtGui.QWidget):
         self.toolbar = NavigationToolbar(self.canvas, self)
 
         # Axis
+        self.ax_t = self.figure.add_subplot(2, 1, 1)
+        self.ax_f = self.figure.add_subplot(2, 1, 2)
         self.update_axis()
 
         # Construct widgets for block options
@@ -227,27 +231,26 @@ class Window(QtGui.QWidget):
         Ns = self.show_n_symbols
         Ts = 1 / self.system.symbol_rate
 
-        self.ax_t = self.figure.add_subplot(2, 1, 1)
+        self.ax_t.cla()
         self.ax_t.grid(True)
         self.ax_t.margins(0.05)
         self.ax_t.set_xlabel('$t$ [s]')
         self.ax_t.set_xlim([-Ts, Ns*Ts])
+        self.ax_t.axhline(0.0, color='k')
 
+        self.ax_f.cla()
         self.ax_f = self.figure.add_subplot(2, 1 ,2)
         self.ax_f.grid(True)
         self.ax_f.margins(0.05)
         self.ax_f.set_xlabel('$f$ [Hz]')
+        self.ax_f.axhline(0.0, color='k')
 
         n_blocks_d = len(self.system_diagram.blocks_d)
         self.plots_t = [None] * n_blocks_d
         self.plots_f = [None] * n_blocks_d
 
     def plot(self):
-        self.ax_t.lines = []
-        self.ax_f.lines = []
-
-        self.ax_t.axhline(0.0, color='k')
-        self.ax_f.axhline(0.0, color='k')
+        self.update_axis()
 
         for (i, block) in enumerate(self.system.blocks):
             connection = self.system_diagram.connections_d[i]
@@ -256,26 +259,27 @@ class Window(QtGui.QWidget):
             data_f = self.system.data_f[i]
             if block.out_type == 'C':
                 lines = self.ax_t.plot(self.system.t, data_t, color=color, linewidth=2)
-                self.plots_t[i] = lines
+                self.plots_t[i] = [lines]
                 lines = self.ax_f.plot(self.system.f, data_f, color=color, linewidth=2)
-                self.plots_f[i] = lines
+                self.plots_f[i] = [lines]
             elif block.out_type == 'D':
-                (markerline, stemlines, baseline) = self.ax_t.stem(self.system.tk, data_t)  # Slow
-                #~(markerline, stemlines, baseline) = self.ax_t.stem(self.system.tk[:Ns], data_t[:Ns])  # Faster
-                plt.setp(markerline, markerfacecolor=color)
-                plt.setp(stemlines, color=color)
-                plt.setp(baseline, visible=False)
-                self.plots_t[i] = (markerline, stemlines)
-                self.plots_f[i] = None
+                x = np.repeat(self.system.tk, 2)
+                y = np.dstack((np.zeros(data_t.shape[0]), data_t)).flatten()
+                lines0 = self.ax_t.step(x, y, color=color, linewidth=1)
+                lines1 = self.ax_t.scatter(x[1::2], y[1::2], color=color, linewidth=3)
+                self.plots_t[i] = [lines0, lines1]
+                self.plots_f[i] = []
 
         self.update_visible()
 
     def update_visible(self):
         for i in range(len(self.system.blocks)):
             connection = self.system_diagram.connections_d[i]
-            plt.setp(self.plots_t[i], visible=connection.visible)
-            if self.plots_f[i] is not None:
-                plt.setp(self.plots_f[i], visible=connection.visible)
+            for lines in self.plots_t[i]:
+                plt.setp(lines, visible=connection.visible)
+            for lines in self.plots_f[i]:
+                plt.setp(lines, visible=connection.visible)
+
 
         self.canvas.draw()
 
