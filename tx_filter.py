@@ -1,6 +1,6 @@
 import numpy as np
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtWidgets
 
 import pulses
 
@@ -10,10 +10,10 @@ class TransmitFilter:
         try:
             return globals()[self.__class__.__name__ + '_Widget'](self)
         except KeyError:
-            return QtGui.QLabel('<i>No options available for this transmit filter.</i>')
+            return QtWidgets.QLabel('<i>No options available for this transmit filter.</i>')
 
 
-class TransmitFilter_Widget(QtGui.QWidget):
+class TransmitFilter_Widget(QtWidgets.QWidget):
     update_signal = QtCore.pyqtSignal()
 
     def __init__(self, tx_filter):
@@ -46,15 +46,15 @@ class PulseFormatter_TransmitFilter(TransmitFilter):
 
 class PulseFormatter_TransmitFilter_Widget(TransmitFilter_Widget):
     def initUI(self):
-        self.combo = QtGui.QComboBox()
+        self.combo = QtWidgets.QComboBox()
         self.combo.addItems(list(pulses.collection.keys()))
         self.combo.activated[str].connect(self.onChange)
 
-        layoutH = QtGui.QHBoxLayout()
-        layoutH.addWidget(QtGui.QLabel('Pulse:'), 0)
+        layoutH = QtWidgets.QHBoxLayout()
+        layoutH.addWidget(QtWidgets.QLabel('Pulse:'), 0)
         layoutH.addWidget(self.combo, 1)
 
-        layoutV = QtGui.QVBoxLayout()
+        layoutV = QtWidgets.QVBoxLayout()
         layoutV.addLayout(layoutH)
         self.pulse_widgets = {}
         for i, (key, val) in enumerate(pulses.collection.items()):

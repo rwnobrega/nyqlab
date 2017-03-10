@@ -1,4 +1,4 @@
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 
 class BlockD:
@@ -17,7 +17,7 @@ class ConnectionD:
         self.visible = visible
 
 
-class SystemDiagram(QtGui.QGraphicsView):
+class SystemDiagram(QtWidgets.QGraphicsView):
     def __init__(self, parent, system, blocks_d, connections_d):
         super().__init__(parent)
         self.parent = parent
@@ -30,7 +30,7 @@ class SystemDiagram(QtGui.QGraphicsView):
         self.initUI()
 
     def initUI(self):
-        self.scene = QtGui.QGraphicsScene(self)
+        self.scene = QtWidgets.QGraphicsScene(self)
         self.scene.setBackgroundBrush(QtGui.QColor('white'))
         self.setScene(self.scene)
 
@@ -75,11 +75,11 @@ class SystemDiagram(QtGui.QGraphicsView):
         path_item.setToolTip(connection.name)
         path_item.setMousePressEvent(lambda x=idx: self.parent.toggleSignal(x))
 
-        self.scene.addItem(QtGui.QGraphicsPathItem(path0))
+        self.scene.addItem(QtWidgets.QGraphicsPathItem(path0))
         self.scene.addItem(path_item)
 
 
-class MyGraphicsRectItem(QtGui.QGraphicsRectItem):
+class MyGraphicsRectItem(QtWidgets.QGraphicsRectItem):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setAcceptHoverEvents(True)
@@ -112,7 +112,7 @@ class MyGraphicsRectItem(QtGui.QGraphicsRectItem):
         self.setBrush(self.leave_brush)
 
 
-class MyGraphicsPathItem(QtGui.QGraphicsPathItem):
+class MyGraphicsPathItem(QtWidgets.QGraphicsPathItem):
     def __init__(self, color, visible, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setAcceptHoverEvents(True)
@@ -133,7 +133,7 @@ class MyGraphicsPathItem(QtGui.QGraphicsPathItem):
         self.mousePressEventFn = fn
 
     def mousePressEvent(self, event):
-        if self == self.scene().itemAt(event.scenePos()):
+        if self == self.scene().itemAt(event.scenePos(), QtGui.QTransform()):
             super().mousePressEvent(event)
             self.mousePressEventFn()
             self.clicked ^= True

@@ -6,11 +6,11 @@ import sys
 
 import numpy as np
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
 import sources, encoder, tx_filter, channels_frequency, channels_noise, rx_filter, sampler, decoder
 
@@ -21,7 +21,7 @@ from window_pulse import WindowPulse
 from window_eye import WindowEye
 
 
-class Window(QtGui.QWidget):
+class Window(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
@@ -93,10 +93,10 @@ class Window(QtGui.QWidget):
         block = self.system.blocks[idx]
         block_name = self.system_diagram.blocks_d[idx].name
 
-        layout = QtGui.QVBoxLayout()
-        layout.addWidget(QtGui.QLabel('<b>{}:</b>'.format(block_name)))
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(QtWidgets.QLabel('<b>{}:</b>'.format(block_name)))
 
-        combo = QtGui.QComboBox(self)
+        combo = QtWidgets.QComboBox(self)
         for name, obj in block.module.choices:
             combo.addItem(name)
         combo.activated[int].connect(functools.partial(self.onBlockComboActivated, idx))
@@ -113,7 +113,7 @@ class Window(QtGui.QWidget):
 
         layout.addStretch()
 
-        widget = QtGui.QWidget()
+        widget = QtWidgets.QWidget()
         widget.setLayout(layout)
 
         return widget, block_choice
@@ -144,28 +144,28 @@ class Window(QtGui.QWidget):
         self.panel_options_visualization = PanelOptions(self, 'Visualization options', self, self.options_visualization)
 
         # Toolbar
-        action_options_general = QtGui.QAction(QtGui.QIcon.fromTheme('preferences-desktop'), 'General options', self)
+        action_options_general = QtWidgets.QAction(QtGui.QIcon.fromTheme('preferences-desktop'), 'General options', self)
         action_options_general.triggered.connect(self.showGeneralOptions)
 
-        action_view_pulse = QtGui.QAction(QtGui.QIcon('media/pulse'), 'View pulse', self)
+        action_view_pulse = QtWidgets.QAction(QtGui.QIcon('media/pulse'), 'View pulse', self)
         action_view_pulse.triggered.connect(self.showWindowPulse)
 
-        action_view_eye = QtGui.QAction(QtGui.QIcon('media/eye'), 'View eye diagram', self)
+        action_view_eye = QtWidgets.QAction(QtGui.QIcon('media/eye'), 'View eye diagram', self)
         action_view_eye.triggered.connect(self.showWindowEye)
 
-        xtoolbar = QtGui.QToolBar()
+        xtoolbar = QtWidgets.QToolBar()
         xtoolbar.addAction(action_options_general)
         xtoolbar.addAction(action_view_pulse)
         xtoolbar.addAction(action_view_eye)
 
         # Main layout
-        layout = QtGui.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.toolbar)
         layout.addWidget(self.canvas)
-        widget_left = QtGui.QWidget()
+        widget_left = QtWidgets.QWidget()
         widget_left.setLayout(layout)
 
-        layout = QtGui.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.addWidget(xtoolbar)
         layout.addWidget(self.system_diagram)
         for w in self.block_options:
@@ -173,10 +173,10 @@ class Window(QtGui.QWidget):
         layout.addWidget(self.panel_options_general)
         layout.addWidget(self.panel_options_visualization)
 
-        widget_right = QtGui.QWidget()
+        widget_right = QtWidgets.QWidget()
         widget_right.setLayout(layout)
 
-        layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
         layout.addWidget(widget_right, 1)
         layout.addWidget(widget_left, 2)
         self.setLayout(layout)
@@ -282,7 +282,7 @@ class Window(QtGui.QWidget):
         plt.close(self.figure)
 
 
-class PanelOptions(QtGui.QWidget):
+class PanelOptions(QtWidgets.QWidget):
     def __init__(self, parent, label, obj, options):
         super().__init__(parent)
         self.parent = parent
@@ -293,14 +293,14 @@ class PanelOptions(QtGui.QWidget):
         self.initUI()
 
     def initUI(self):
-        layout = QtGui.QFormLayout()
-        layout.addRow(QtGui.QLabel('<b>{}:</b>'.format(self.label)), QtGui.QWidget())
+        layout = QtWidgets.QFormLayout()
+        layout.addRow(QtWidgets.QLabel('<b>{}:</b>'.format(self.label)), QtWidgets.QWidget())
 
         self.text = {}
 
         for key in self.options:
             label = self.options[key]
-            self.text[key] = QtGui.QLineEdit()
+            self.text[key] = QtWidgets.QLineEdit()
             self.text[key].setText(str(getattr(self.obj, key)))
             self.text[key].editingFinished.connect(lambda key=key: self.onChange_text(key))
             layout.addRow(label + ':', self.text[key])
@@ -318,7 +318,7 @@ class PanelOptions(QtGui.QWidget):
 
 
 if __name__ == '__main__':
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
 
     main = Window()
     main.show()

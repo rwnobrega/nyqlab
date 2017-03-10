@@ -1,6 +1,6 @@
 import numpy as np
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtWidgets
 
 
 class Sampler:
@@ -8,9 +8,9 @@ class Sampler:
         try:
             return globals()[self.__class__.__name__ + '_Widget'](self)
         except KeyError:
-            return QtGui.QLabel('<i>No options available for this sampling scheme.</i>')
+            return QtWidgets.QLabel('<i>No options available for this sampling scheme.</i>')
 
-class Sampler_Widget(QtGui.QWidget):
+class Sampler_Widget(QtWidgets.QWidget):
     update_signal = QtCore.pyqtSignal()
 
     def __init__(self, sampler):
@@ -39,16 +39,16 @@ class Simple_Sampler(Sampler):
 
 class Simple_Sampler_Widget(Sampler_Widget):
     def initUI(self):
-        self.sampling_instant_text = QtGui.QLineEdit(str(self.sampler.sampling_instant))
+        self.sampling_instant_text = QtWidgets.QLineEdit(str(self.sampler.sampling_instant))
         self.sampling_instant_text.editingFinished.connect(self.onChange_text)
 
-        self.sampling_instant_slider = QtGui.QSlider(QtCore.Qt.Horizontal)
+        self.sampling_instant_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
         self.sampling_instant_slider.setRange(-50, 50)
         self.sampling_instant_slider.setValue(self.sampler.sampling_instant)
         self.sampling_instant_slider.valueChanged[int].connect(self.onChange_slider)
 
-        layout = QtGui.QHBoxLayout()
-        layout.addWidget(QtGui.QLabel('Sampling instant [% of Ts]:'), 1)
+        layout = QtWidgets.QHBoxLayout()
+        layout.addWidget(QtWidgets.QLabel('Sampling instant [% of Ts]:'), 1)
         layout.addWidget(self.sampling_instant_text, 1)
         layout.addWidget(self.sampling_instant_slider, 2)
 

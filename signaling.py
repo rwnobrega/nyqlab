@@ -2,7 +2,7 @@ import collections
 
 import numpy as np
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtWidgets
 
 
 def slicer(y, thresholds, values):
@@ -21,7 +21,7 @@ class SignalingScheme:
         try:
             return globals()[self.__class__.__name__ + '_Widget'](self)
         except KeyError:
-            return QtGui.QLabel('<i>No options available for this signaling scheme.</i>')
+            return QtWidgets.QLabel('<i>No options available for this signaling scheme.</i>')
 
     def detect(self, y):
         return slicer(x, self.thresholds, self.values)

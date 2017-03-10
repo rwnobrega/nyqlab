@@ -1,6 +1,6 @@
 import numpy as np
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtWidgets
 
 import signaling
 
@@ -10,10 +10,10 @@ class Encoder:
         try:
             return globals()[self.__class__.__name__ + '_Widget'](self)
         except KeyError:
-            return QtGui.QLabel('<i>No options available for this encoder.</i>')
+            return QtWidgets.QLabel('<i>No options available for this encoder.</i>')
 
 
-class Encoder_Widget(QtGui.QWidget):
+class Encoder_Widget(QtWidgets.QWidget):
     update_signal = QtCore.pyqtSignal()
 
     def __init__(self, encoder):
@@ -32,13 +32,13 @@ class Simple_Encoder(Encoder):
 
 class Simple_Encoder_Widget(Encoder_Widget):
     def initUI(self):
-        layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
 
-        self.combo = QtGui.QComboBox()
+        self.combo = QtWidgets.QComboBox()
         self.combo.addItems(list(signaling.collection.keys()))
         self.combo.activated[str].connect(self.onChange)
 
-        layout.addWidget(QtGui.QLabel('Signaling:'), 0)
+        layout.addWidget(QtWidgets.QLabel('Signaling:'), 0)
         layout.addWidget(self.combo, 1)
 
         self.setLayout(layout)

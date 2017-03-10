@@ -1,6 +1,6 @@
 import numpy as np
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtWidgets
 
 
 class ChannelNoise:
@@ -8,10 +8,10 @@ class ChannelNoise:
         try:
             return globals()[self.__class__.__name__ + '_Widget'](self)
         except KeyError:
-            return QtGui.QLabel('<i>No options available for this channel.</i>')
+            return QtWidgets.QLabel('<i>No options available for this channel.</i>')
 
 
-class ChannelNoise_Widget(QtGui.QWidget):
+class ChannelNoise_Widget(QtWidgets.QWidget):
     update_signal = QtCore.pyqtSignal()
 
     def __init__(self, channel):
@@ -45,10 +45,10 @@ class AWGN_ChannelNoise(ChannelNoise):
 
 class AWGN_ChannelNoise_Widget(ChannelNoise_Widget):
     def initUI(self):
-        layout = QtGui.QHBoxLayout()
-        self.snr_db = QtGui.QLineEdit(str(self.channel.snr_db))
+        layout = QtWidgets.QHBoxLayout()
+        self.snr_db = QtWidgets.QLineEdit(str(self.channel.snr_db))
         self.snr_db.editingFinished.connect(self.onChange)
-        layout.addWidget(QtGui.QLabel('SNR [dB]:'))
+        layout.addWidget(QtWidgets.QLabel('SNR [dB]:'))
         layout.addWidget(self.snr_db)
         self.setLayout(layout)
 

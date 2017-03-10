@@ -1,14 +1,14 @@
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtWidgets
 
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
 import numpy as np
 import scipy as sp
 
 
-class WindowEye(QtGui.QDialog):
+class WindowEye(QtWidgets.QDialog):
     def __init__(self, parent):
         super().__init__(parent)
 
@@ -25,7 +25,7 @@ class WindowEye(QtGui.QDialog):
         self.canvas = FigureCanvas(self.figure)
         self.toolbar = NavigationToolbar(self.canvas, self)
 
-        layout = QtGui.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.toolbar)
         layout.addWidget(self.canvas)
 

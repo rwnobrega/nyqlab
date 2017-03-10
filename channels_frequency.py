@@ -1,7 +1,7 @@
 import numpy as np
 import scipy as sp
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtWidgets
 
 
 class ChannelFrequency:
@@ -9,10 +9,10 @@ class ChannelFrequency:
         try:
             return globals()[self.__class__.__name__ + '_Widget'](self)
         except KeyError:
-            return QtGui.QLabel('<i>No options available for this channel.</i>')
+            return QtWidgets.QLabel('<i>No options available for this channel.</i>')
 
 
-class ChannelFrequency_Widget(QtGui.QWidget):
+class ChannelFrequency_Widget(QtWidgets.QWidget):
     update_signal = QtCore.pyqtSignal()
 
     def __init__(self, channel):
@@ -49,10 +49,10 @@ class IdealLowpass_ChannelFrequency(ChannelFrequency):
 
 class IdealLowpass_ChannelFrequency_Widget(ChannelFrequency_Widget):
     def initUI(self):
-        layout = QtGui.QHBoxLayout()
-        self.bandwidth = QtGui.QLineEdit(str(self.channel.bandwidth))
+        layout = QtWidgets.QHBoxLayout()
+        self.bandwidth = QtWidgets.QLineEdit(str(self.channel.bandwidth))
         self.bandwidth.editingFinished.connect(self.onChange)
-        layout.addWidget(QtGui.QLabel('Bandwidth [Hz]:'))
+        layout.addWidget(QtWidgets.QLabel('Bandwidth [Hz]:'))
         layout.addWidget(self.bandwidth)
         self.setLayout(layout)
 
@@ -83,10 +83,10 @@ class FirstOrderLowpass_ChannelFrequency(ChannelFrequency):
 
 class FirstOrderLowpass_ChannelFrequency_Widget(ChannelFrequency_Widget):
     def initUI(self):
-        layout = QtGui.QHBoxLayout()
-        self.cutoff_frequency = QtGui.QLineEdit(str(self.channel.cutoff_frequency))
+        layout = QtWidgets.QHBoxLayout()
+        self.cutoff_frequency = QtWidgets.QLineEdit(str(self.channel.cutoff_frequency))
         self.cutoff_frequency.editingFinished.connect(self.onChange)
-        layout.addWidget(QtGui.QLabel('Cutoff frequency [Hz]:'))
+        layout.addWidget(QtWidgets.QLabel('Cutoff frequency [Hz]:'))
         layout.addWidget(self.cutoff_frequency)
         self.setLayout(layout)
 
@@ -117,10 +117,10 @@ class SecondOrderBandpass_ChannelFrequency(ChannelFrequency):
 
 class SecondOrderBandpass_ChannelFrequency_Widget(ChannelFrequency_Widget):
     def initUI(self):
-        layout = QtGui.QHBoxLayout()
-        self.cutoff_frequency = QtGui.QLineEdit(str(self.channel.cutoff_frequency))
+        layout = QtWidgets.QHBoxLayout()
+        self.cutoff_frequency = QtWidgets.QLineEdit(str(self.channel.cutoff_frequency))
         self.cutoff_frequency.editingFinished.connect(self.onChange)
-        layout.addWidget(QtGui.QLabel('Cutoff frequency [Hz]:'))
+        layout.addWidget(QtWidgets.QLabel('Cutoff frequency [Hz]:'))
         layout.addWidget(self.cutoff_frequency)
         self.setLayout(layout)
 

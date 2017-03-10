@@ -2,7 +2,7 @@ import collections
 
 import numpy as np
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtWidgets
 
 
 class Pulse:
@@ -15,10 +15,10 @@ class Pulse:
         try:
             return globals()[self.__class__.__name__ + '_Widget'](self)
         except KeyError:
-            return QtGui.QLabel('<i>No options available for this pulse.</i>')
+            return QtWidgets.QLabel('<i>No options available for this pulse.</i>')
 
 
-class Pulse_Widget(QtGui.QWidget):
+class Pulse_Widget(QtWidgets.QWidget):
     update_signal = QtCore.pyqtSignal()
 
     def __init__(self, pulse):
@@ -73,11 +73,11 @@ class Sinc_Pulse(Pulse):
 
 class Sinc_Pulse_Widget(Pulse_Widget):
     def initUI(self):
-        self.text_filt_len = QtGui.QLineEdit(str(self.pulse.filt_len))
+        self.text_filt_len = QtWidgets.QLineEdit(str(self.pulse.filt_len))
         self.text_filt_len.editingFinished.connect(self.onChange_text_filt_len)
 
-        layout = QtGui.QHBoxLayout()
-        layout.addWidget(QtGui.QLabel('Filter length [Ts]:'), 1)
+        layout = QtWidgets.QHBoxLayout()
+        layout.addWidget(QtWidgets.QLabel('Filter length [Ts]:'), 1)
         layout.addWidget(self.text_filt_len, 2)
 
         self.setLayout(layout)
@@ -130,27 +130,27 @@ class RaisedCosine_Pulse(Pulse):
 
 class RaisedCosine_Pulse_Widget(Pulse_Widget):
     def initUI(self):
-        self.text_filt_len = QtGui.QLineEdit(str(self.pulse.filt_len))
+        self.text_filt_len = QtWidgets.QLineEdit(str(self.pulse.filt_len))
         self.text_filt_len.editingFinished.connect(self.onChange_text_filt_len)
 
-        self.text_rolloff = QtGui.QLineEdit(str(self.pulse.rolloff))
+        self.text_rolloff = QtWidgets.QLineEdit(str(self.pulse.rolloff))
         self.text_rolloff.editingFinished.connect(self.onChange_text_rolloff)
 
-        self.slider_rolloff = QtGui.QSlider(QtCore.Qt.Horizontal)
+        self.slider_rolloff = QtWidgets.QSlider(QtCore.Qt.Horizontal)
         self.slider_rolloff.setRange(0, 100)
         self.slider_rolloff.setValue(int(100 * self.pulse.rolloff))
         self.slider_rolloff.valueChanged[int].connect(self.onChange_slider_rolloff)
 
-        layout0 = QtGui.QHBoxLayout()
-        layout0.addWidget(QtGui.QLabel('Filter length [Ts]:'), 1)
+        layout0 = QtWidgets.QHBoxLayout()
+        layout0.addWidget(QtWidgets.QLabel('Filter length [Ts]:'), 1)
         layout0.addWidget(self.text_filt_len, 2)
 
-        layout1 = QtGui.QHBoxLayout()
-        layout1.addWidget(QtGui.QLabel('Rolloff factor:'), 1)
+        layout1 = QtWidgets.QHBoxLayout()
+        layout1.addWidget(QtWidgets.QLabel('Rolloff factor:'), 1)
         layout1.addWidget(self.text_rolloff, 1)
         layout1.addWidget(self.slider_rolloff, 2)
 
-        layout = QtGui.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.addLayout(layout0)
         layout.addLayout(layout1)
         self.setLayout(layout)

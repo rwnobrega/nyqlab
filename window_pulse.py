@@ -1,14 +1,14 @@
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtWidgets
 
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
 import numpy as np
 import scipy as sp
 
 
-class WindowPulse(QtGui.QDialog):
+class WindowPulse(QtWidgets.QDialog):
     def __init__(self, parent):
         super().__init__(parent)
         self.parent = parent
@@ -24,7 +24,7 @@ class WindowPulse(QtGui.QDialog):
         self.canvas = FigureCanvas(self.figure)
         self.toolbar = NavigationToolbar(self.canvas, self)
 
-        layout = QtGui.QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.toolbar)
         layout.addWidget(self.canvas)
 

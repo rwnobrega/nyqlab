@@ -1,6 +1,6 @@
 import numpy as np
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtWidgets
 
 
 class BitSource:
@@ -8,10 +8,10 @@ class BitSource:
         try:
             return globals()[self.__class__.__name__ + '_Widget'](self)
         except KeyError:
-            return QtGui.QLabel('<i>No options available for this source.</i>')
+            return QtWidgets.QLabel('<i>No options available for this source.</i>')
 
 
-class BitSource_Widget(QtGui.QWidget):
+class BitSource_Widget(QtWidgets.QWidget):
     update_signal = QtCore.pyqtSignal()
 
     def __init__(self, source):
@@ -33,11 +33,11 @@ class Random_BitSource(BitSource):
 
 class Random_BitSource_Widget(BitSource_Widget):
     def initUI(self):
-        layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
 
-        self.text_n_bits = QtGui.QLineEdit(str(self.source.n_bits))
+        self.text_n_bits = QtWidgets.QLineEdit(str(self.source.n_bits))
         self.text_n_bits.editingFinished.connect(self.onChange)
-        layout.addWidget(QtGui.QLabel('Number of bits:'))
+        layout.addWidget(QtWidgets.QLabel('Number of bits:'))
         layout.addWidget(self.text_n_bits)
 
         self.setLayout(layout)
@@ -67,11 +67,11 @@ class Fixed_BitSource(BitSource):
 
 class Fixed_BitSource_Widget(BitSource_Widget):
     def initUI(self):
-        layout = QtGui.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout()
 
-        self.bits = QtGui.QLineEdit(''.join(str(x) for x in self.source.bits))
+        self.bits = QtWidgets.QLineEdit(''.join(str(x) for x in self.source.bits))
         self.bits.editingFinished.connect(self.onChange)
-        layout.addWidget(QtGui.QLabel('Bit sequence:'))
+        layout.addWidget(QtWidgets.QLabel('Bit sequence:'))
         layout.addWidget(self.bits)
 
         self.setLayout(layout)
