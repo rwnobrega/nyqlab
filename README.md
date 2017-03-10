@@ -8,18 +8,11 @@ NyqLab is an educational software aiming to help students learn and practice bas
 * [NumPy](http://www.numpy.org/)
 * [SciPy](http://www.scipy.org/)
 * [matplotlib](http://matplotlib.org/)
-* [PyQt4](http://www.riverbankcomputing.com/software/pyqt/)
+* [PyQt5](http://www.riverbankcomputing.com/software/pyqt/)
 
-### Installing dependencies on Ubuntu
+## Acknowledgments
 
-```bash
-sudo apt-get install python3-matplotlib python3-pyqt4 python3-scipy python3-numpy
-```
-### Installing dependencies on Fedora 22
-
-```bash
-dnf install python3-numpy python3-scipy python3-matplotlib python3-PyQt4 python3-matplotlib-qt4 python3-matplotlib-qt5
-```
+Many thanks to Vincent Vande Vyvre for pyqt4topyqt5.py
 
 ## License
 
