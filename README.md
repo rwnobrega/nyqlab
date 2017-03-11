@@ -12,7 +12,7 @@ NyqLab is an educational software aiming to help students learn and practice bas
 
 ## Acknowledgments
 
-Many thanks to Vincent Vande Vyvre for pyqt4topyqt5.py
+Many thanks to Vincent Vande Vyvre for `pyqt4topyqt5.py`.
 
 ## License
 
