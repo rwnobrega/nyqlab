@@ -56,7 +56,7 @@ class Polar_Signaling(SignalingScheme):
         return 2.0 * bits - 1.0
 
     def decode(self, x):
-        return (0.5*(x + 1.0)).astype(int)
+        return (x >= 0).astype(np.int)
 
     def acorr(self, ell):
         if ell == 0:
