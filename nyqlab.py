@@ -266,7 +266,7 @@ class Window(QtWidgets.QWidget):
                 x = np.repeat(self.system.tk, 2)
                 y = np.dstack((np.zeros(data_t.shape[0]), data_t)).flatten()
                 lines_t = [self.ax_t.step(x, y, color=color, linewidth=1),
-                           self.ax_t.scatter(x[1::2], y[1::2], color=color, linewidth=3)]
+                           self.ax_t.scatter(x[1::2], y[1::2], color=color, linewidth=1)]
                 lines_f = []
             self.plots_t.append(lines_t)
             self.plots_f.append(lines_f)
