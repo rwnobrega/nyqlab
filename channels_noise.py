@@ -30,14 +30,14 @@ class Bypass_ChannelNoise(ChannelNoise):
 # AWGN channel
 
 class AWGN_ChannelNoise(ChannelNoise):
-    def __init__(self, snr_db=30.0, sps=1):
+    def __init__(self, snr_db=30.0):
         self.snr_db = snr_db
-        self.sps = sps
 
     def process(self, s, fs=None):
+        sps = self.system.sps
         snr = 10.0 ** (0.1 * self.snr_db)
         signal_power = np.mean(s**2)
-        noise_power = self.sps * signal_power / snr
+        noise_power = sps * signal_power / snr
         w = np.random.normal(size=len(s)) * np.sqrt(noise_power)
         r = s + w
         return r
