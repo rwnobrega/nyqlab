@@ -8,9 +8,13 @@ import numpy as np
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
+import matplotlib
+matplotlib.use("Qt5Agg")
+
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+
 
 import sources, encoder, tx_filter, channels_frequency, channels_noise, rx_filter, sampler, decoder
 
