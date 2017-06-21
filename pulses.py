@@ -210,7 +210,7 @@ class RootRaisedCosine_Pulse_Widget(RaisedCosine_Pulse_Widget):
 collection = collections.OrderedDict([
     ('Rectangular NRZ', RectangularNRZ_Pulse()),
     ('Rectangular RZ', RectangularRZ_Pulse()),
-    ('Manchester', Manchester_Pulse()),
+    ('Biphase (Manchester)', Manchester_Pulse()),
     ('Triangular', Triangular_Pulse()),
     ('Sinc', Sinc_Pulse()),
     ('Squared sinc', SquaredSinc_Pulse()),
