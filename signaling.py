@@ -39,6 +39,22 @@ class MemorylessSignalingScheme(SignalingScheme):
         return unmap(slicer(y, self.thresholds, self.values), self.values)
 
 
+class SequenceStateSignalingScheme(SignalingScheme):
+    def __init__(self, finite_state_machine, ):
+        self.finite_state_machine = finite_state_machine
+
+    def encode(self, bits, initial_state=0):
+        fsm = self.finite_state_machine
+        state = initial_state
+        x = np.empty_like(bits)
+        for (i, b) in enumerate(bits):
+            state, x[i] = fsm[state, b]
+        return x
+
+    def decode(self, y):
+        raise NotImplementedError
+
+
 class Unipolar_Signaling(MemorylessSignalingScheme):
     def __init__(self):
         super().__init__(values=[0.0, 1.0], thresholds=[0.5])
@@ -61,18 +77,11 @@ class Polar_Signaling(MemorylessSignalingScheme):
             return 0.0
 
 
-class AMI_Signaling(SignalingScheme):
+class AMI_Signaling(SequenceStateSignalingScheme):
     def __init__(self):
-        self.thresholds = [-0.5, 0.5]
-        self.values = [-1.0, 0.0, 1.0]
-        SignalingScheme.__init__(self)
-
-    def encode(self, bits):
-        x = np.zeros(np.size(bits))
-        q = np.flatnonzero(bits)
-        i = np.arange(len(q))
-        x[q] = (-1.0)**i
-        return x
+        fsm = {(0, 0): (0, 0.0), (0, 1): (1,  1.0),
+               (1, 0): (1, 0.0), (1, 1): (0, -1.0)}
+        super().__init__(finite_state_machine=fsm)
 
     def decode(self, y):
         return np.abs(y).astype(int)
@@ -86,28 +95,19 @@ class AMI_Signaling(SignalingScheme):
             return 0.0
 
 
-class MLT3_Signaling(SignalingScheme):
+class MLT3_Signaling(SequenceStateSignalingScheme):
     def __init__(self):
-        self.thresholds = [-0.5, 0.5]
-        self.values = [-1.0, 0.0, 1.0]
-        SignalingScheme.__init__(self)
-
-    def encode(self, bits):
-        x = np.zeros(np.size(bits))
-        state = 0
-        # State sequence: 0 (LM) -> 1 (MH) -> 2 (HM) -> 3 (ML) -> 0 (LM)
-        for i, b in enumerate(bits):
-            if b == 0:
-                x[i] = x[i - 1]  # Note that if i = 0, then i - 1 = -1,
-                                 # and x[-1] = 0 at this point
-            else:
-                state = (state + 1) % 4
-                x[i] = [0, 1, 0, -1][state]
-        return x
+        fsm = {(0, 0): (0,  0.0), (0, 1): (1,  1.0),
+               (1, 0): (1,  1.0), (1, 1): (2,  0.0),
+               (2, 0): (2,  0.0), (2, 1): (3, -1.0),
+               (3, 0): (3, -1.0), (3, 1): (0,  0.0)}
+        super().__init__(finite_state_machine=fsm)
 
     def decode(self, y):  # Not optimal!
+        values = [-1.0, 0.0, 1.0]
+        thresholds = [-0.5, 0.5]
         bits_hat = np.zeros(np.size(y))
-        x_hat = unmap(slicer(y, self.thresholds, self.values), self.values)
+        x_hat = unmap(slicer(y, thresholds, values), values)
         for i in range(len(x_hat)):
             bits_hat[i] = (x_hat[i] != x_hat[i - 1]).astype(int)
         return bits_hat
