@@ -6,14 +6,17 @@ from PyQt5 import QtCore, QtWidgets
 
 
 def slicer(y, thresholds, values):
+    thresholds = np.hstack([-np.inf, thresholds, np.inf])
     x_hat = np.empty_like(y)
-    for k in range(len(y)):
-        for (i, th) in enumerate(thresholds):
-            if y[k] < th:
-                x_hat[k] = values[i]
-                break
-            x_hat[k] = values[-1]
+    for t0, t1, v in zip(thresholds[:-1], thresholds[1:], values):
+        x_hat[(t0 < y) & (y <= t1)] = v
     return x_hat
+
+def unmap(x, values):
+    b = np.empty_like(x)
+    for i, v in enumerate(values):
+        b[x == v] = i
+    return b
 
 
 class SignalingScheme:
@@ -23,21 +26,22 @@ class SignalingScheme:
         except KeyError:
             return QtWidgets.QLabel('<i>No options available for this signaling scheme.</i>')
 
-    def detect(self, y):
-        return slicer(x, self.thresholds, self.values)
 
-
-class Unipolar_Signaling(SignalingScheme):
-    def __init__(self):
-        self.thresholds = [0.5]
-        self.values = [0.0, 1.0]
-        SignalingScheme.__init__(self)
+class MemorylessSignalingScheme(SignalingScheme):
+    def __init__(self, values, thresholds):
+        self.values = np.array(values)
+        self.thresholds = np.array(thresholds)
 
     def encode(self, bits):
-        return 1.0 * bits
+        return self.values[bits]
 
-    def decode(self, x):
-        return x.astype(int)
+    def decode(self, y):
+        return unmap(slicer(y, self.thresholds, self.values), self.values)
+
+
+class Unipolar_Signaling(MemorylessSignalingScheme):
+    def __init__(self):
+        super().__init__(values=[0.0, 1.0], thresholds=[0.5])
 
     def acorr(self, ell):
         if ell == 0:
@@ -46,17 +50,9 @@ class Unipolar_Signaling(SignalingScheme):
             return 0.25
 
 
-class Polar_Signaling(SignalingScheme):
+class Polar_Signaling(MemorylessSignalingScheme):
     def __init__(self):
-        self.thresholds = [0.0]
-        self.values = [-1.0, 1.0]
-        SignalingScheme.__init__(self)
-
-    def encode(self, bits):
-        return 2.0 * bits - 1.0
-
-    def decode(self, x):
-        return (x >= 0).astype(np.int)
+        super().__init__(values=[-1.0, 1.0], thresholds=[0.0])
 
     def acorr(self, ell):
         if ell == 0:
@@ -78,8 +74,8 @@ class AMI_Signaling(SignalingScheme):
         x[q] = (-1.0)**i
         return x
 
-    def decode(self, x):
-        return np.abs(x).astype(int)
+    def decode(self, y):
+        return np.abs(y).astype(int)
 
     def acorr(self, ell):
         if ell == 0:
@@ -109,9 +105,9 @@ class MLT3_Signaling(SignalingScheme):
                 x[i] = [0, 1, 0, -1][state]
         return x
 
-    def decode(self, x):  # Not optimal!
-        bits_hat = np.zeros(np.size(x))
-        x_hat = self.detect(x)
+    def decode(self, y):  # Not optimal!
+        bits_hat = np.zeros(np.size(y))
+        x_hat = unmap(slicer(y, self.thresholds, self.values), self.values)
         for i in range(len(x_hat)):
             bits_hat[i] = (x_hat[i] != x_hat[i - 1]).astype(int)
         return bits_hat

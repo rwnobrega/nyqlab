@@ -16,17 +16,15 @@ class Decoder:
 class Decoder_Widget(QtWidgets.QWidget):
     update_signal = QtCore.pyqtSignal()
 
-    def __init__(self, Decoder):
+    def __init__(self, decoder):
         super().__init__()
-        self.Decoder = Decoder
+        self.decoder = decoder
         self.initUI()
 
 
 class Simple_Decoder(Decoder):
-    signaling = list(signaling.collection.values())[0]
-
     def process(self, y):
-        return self.signaling.decode(y)
+        return self.system.signaling.decode(y)
 
 
 choices = [

@@ -26,6 +26,8 @@ class Simple_Encoder(Encoder):
     signaling = list(signaling.collection.values())[0]
 
     def process(self, y):
+        self.system.signaling = self.signaling
+
         self.system.n_symbols = self.system.n_bits * 1 # TODO: Binary so far...
         return self.signaling.encode(y)
 
@@ -46,7 +48,6 @@ class Simple_Encoder_Widget(Encoder_Widget):
     def onChange(self, text):
         self.encoder.signaling = signaling.collection[text]
         self.update_signal.emit()
-
 
 
 choices = [
