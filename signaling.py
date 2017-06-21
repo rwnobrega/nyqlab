@@ -73,8 +73,8 @@ class AMI_Signaling(SignalingScheme):
 
     def encode(self, bits):
         x = np.zeros(np.size(bits))
-        q = np.nonzero(bits)
-        i = np.arange(len(bits))
+        q = np.flatnonzero(bits)
+        i = np.arange(len(q))
         x[q] = (-1.0)**i
         return x
 
