@@ -47,7 +47,17 @@ class Manchester_Pulse(Pulse):
     is_square = True
 
     def pulse(self, tx):
-        return 1.0 * ((0.0 <= tx) & (tx < 0.5)) - 1.0*((0.5 <= tx) & (tx < 1.0))
+        return  1.0 * ((0.0 <= tx) & (tx < 0.5)) + \
+               -1.0 * ((0.5 <= tx) & (tx < 1.0))
+
+
+class Wal2_Pulse(Pulse):
+    is_square = True
+
+    def pulse(self, tx):
+        return -1.0 * ((0.0  <= tx) & (tx < 0.25)) + \
+                1.0 * ((0.25 <= tx) & (tx < 0.75)) + \
+               -1.0 * ((0.75 <= tx) & (tx < 1.00))
 
 
 class Triangular_Pulse(Pulse):
@@ -211,6 +221,7 @@ collection = collections.OrderedDict([
     ('Rectangular NRZ', RectangularNRZ_Pulse()),
     ('Rectangular RZ', RectangularRZ_Pulse()),
     ('Biphase (Manchester)', Manchester_Pulse()),
+    ('Wal-2', Wal2_Pulse()),
     ('Triangular', Triangular_Pulse()),
     ('Sinc', Sinc_Pulse()),
     ('Squared sinc', SquaredSinc_Pulse()),
