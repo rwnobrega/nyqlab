@@ -13,10 +13,10 @@ def slicer(y, thresholds, values):
     return x_hat
 
 def unmap(x, values):
-    b = np.empty_like(x)
-    for i, v in enumerate(values):
-        b[x == v] = i
-    return b
+    bits = np.empty_like(x)
+    for b, v in enumerate(values):
+        bits[x == v] = b
+    return bits
 
 
 class SignalingScheme:
