@@ -74,7 +74,7 @@ class Window(QtWidgets.QWidget):
             ConnectionD('Received signal',              [(11, 4), (11, 5), (10, 5)],        (0xFF, 0x00, 0xFF)),
             ConnectionD('Receive filter output',        [(8, 5), (7.5, 5)],                 (0xFF, 0x00, 0x00), True),
             ConnectionD('Output symbols',               [(5.5, 5), (5, 5)],                 (0xFF, 0x00, 0x00)),
-            ConnectionD('Estimated bits',               [(2, 5), (3.5, 5)],                 (0xAA, 0xAA, 0xAA)),
+            ConnectionD('Estimated bits',               [(2, 5), (3.5, 5)],                 (0xD4, 0xAF, 0x37)),
         ]
 
         self.system_diagram = SystemDiagram(self, self.system, blocks_d, connections_d)
