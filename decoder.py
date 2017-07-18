@@ -28,5 +28,5 @@ class Simple_Decoder(Decoder):
 
 
 choices = [
-    ('Slicer + Uncoder', Simple_Decoder()),
+    ('Slicer + Inverse encoder', Simple_Decoder()),
 ]

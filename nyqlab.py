@@ -57,7 +57,7 @@ class Window(QtWidgets.QWidget):
     def setupSystemDiagram(self):
         blocks_d = [
             BlockD('Source',                            (1, 0, 1, 1),           alias='Src'),
-            BlockD('Coder',                             (3, 0, 2, 1)),
+            BlockD('Encoder',                           (3, 0, 2, 1)),
             BlockD('Transmit filter',                   (8, 0, 2, 1),           alias='TX filter'),
             BlockD('Channel frequency response',        (10, 1.5, 2, 1),        alias='Freq'),
             BlockD('Channel noise',                     (10, 3, 2, 1),          alias='Noise'),
