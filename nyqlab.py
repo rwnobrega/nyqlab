@@ -130,6 +130,9 @@ class Window(QtWidgets.QWidget):
         self.canvas = FigureCanvas(self.figure)
         self.toolbar = NavigationToolbar(self.canvas, self)
 
+        # BER label
+        self.ber_text = QtWidgets.QLabel('<b>BER</b>')
+
         # Axis
         self.ax_t = self.figure.add_subplot(2, 1, 1)
         self.ax_f = self.figure.add_subplot(2, 1, 2)
@@ -166,8 +169,8 @@ class Window(QtWidgets.QWidget):
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.toolbar)
         layout.addWidget(self.canvas)
-        widget_left = QtWidgets.QWidget()
-        widget_left.setLayout(layout)
+        widget_right = QtWidgets.QWidget()
+        widget_right.setLayout(layout)
 
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(xtoolbar)
@@ -176,13 +179,14 @@ class Window(QtWidgets.QWidget):
             layout.addWidget(w)
         layout.addWidget(self.panel_options_general)
         layout.addWidget(self.panel_options_visualization)
+        layout.addWidget(self.ber_text)
 
-        widget_right = QtWidgets.QWidget()
-        widget_right.setLayout(layout)
+        widget_left = QtWidgets.QWidget()
+        widget_left.setLayout(layout)
 
         layout = QtWidgets.QHBoxLayout()
-        layout.addWidget(widget_right, 1)
-        layout.addWidget(widget_left, 2)
+        layout.addWidget(widget_left, 1)
+        layout.addWidget(widget_right, 2)
         self.setLayout(layout)
 
         self.showBlockOption(0)
@@ -274,6 +278,8 @@ class Window(QtWidgets.QWidget):
                 lines_f = []
             self.plots_t.append(lines_t)
             self.plots_f.append(lines_f)
+
+        self.ber_text.setText('<b>BER</b>: {:.2E}'.format(self.system.ber))
 
         self.update_visible()
 

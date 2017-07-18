@@ -32,6 +32,8 @@ class SystemSimulator:
             else:
                 self.data_t[i] = block.box.process(self.data_t[i - 1])
 
+        self.ber = sum(1*(self.data_t[0] != self.data_t[-1])) / self.n_symbols  # TODO: So far, binary only
+
     def processSpectra(self):
         sps = self.sps
         samp_freq = self.samp_freq

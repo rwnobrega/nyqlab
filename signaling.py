@@ -13,7 +13,7 @@ def slicer(y, thresholds, values):
     return x_hat
 
 def unmap(x, values):
-    bits = np.empty_like(x)
+    bits = np.empty_like(x, dtype=np.int)
     for b, v in enumerate(values):
         bits[x == v] = b
     return bits
@@ -84,7 +84,7 @@ class AMI_Signaling(SequenceStateSignalingScheme):
         super().__init__(finite_state_machine=fsm)
 
     def decode(self, y):
-        return np.abs(y).astype(int)
+        return np.abs(y).astype(np.int)
 
     def acorr(self, ell):
         if ell == 0:
@@ -106,10 +106,10 @@ class MLT3_Signaling(SequenceStateSignalingScheme):
     def decode(self, y):  # Not optimal!
         values = [-1.0, 0.0, 1.0]
         thresholds = [-0.5, 0.5]
-        bits_hat = np.zeros(np.size(y))
+        bits_hat = np.zeros(np.size(y), dtype=np.int)
         x_hat = unmap(slicer(y, thresholds, values), values)
         for i in range(len(x_hat)):
-            bits_hat[i] = (x_hat[i] != x_hat[i - 1]).astype(int)
+            bits_hat[i] = (x_hat[i] != x_hat[i - 1])
         return bits_hat
 
 
