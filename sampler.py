@@ -22,12 +22,10 @@ class Sampler_Widget(QtWidgets.QWidget):
 # Samplers
 
 class Simple_Sampler(Sampler):
-    sampling_instant = 0
-
     def sampling_instants(self, r):
         sps = self.system.sps
         Ns = self.system.n_symbols
-        s_inst = self.sampling_instant / 100
+        s_inst = self.system.sampling_instant
         tk = np.arange(round(s_inst * sps), len(r), step=sps) + sps
         return tk[:Ns]
 
@@ -39,12 +37,11 @@ class Simple_Sampler(Sampler):
 
 class Simple_Sampler_Widget(Sampler_Widget):
     def initUI(self):
-        self.sampling_instant_text = QtWidgets.QLineEdit(str(self.sampler.sampling_instant))
+        self.sampling_instant_text = QtWidgets.QLineEdit()
         self.sampling_instant_text.editingFinished.connect(self.onChange_text)
 
         self.sampling_instant_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
         self.sampling_instant_slider.setRange(-50, 50)
-        self.sampling_instant_slider.setValue(self.sampler.sampling_instant)
         self.sampling_instant_slider.valueChanged[int].connect(self.onChange_slider)
 
         layout = QtWidgets.QHBoxLayout()
@@ -54,16 +51,18 @@ class Simple_Sampler_Widget(Sampler_Widget):
 
         self.setLayout(layout)
 
+        self._update(0)
+
     def onChange_text(self):
-        self.sampler.sampling_instant = int(self.sampling_instant_text.text())
-        self.sampling_instant_text.setText(str(self.sampler.sampling_instant))
-        self.sampling_instant_slider.setValue(self.sampler.sampling_instant)
-        self.update_signal.emit()
+        self._update(int(self.sampling_instant_text.text()))
 
     def onChange_slider(self):
-        self.sampler.sampling_instant = self.sampling_instant_slider.value()
-        self.sampling_instant_text.setText(str(self.sampler.sampling_instant))
-        self.sampling_instant_slider.setValue(self.sampler.sampling_instant)
+        self._update(self.sampling_instant_slider.value())
+
+    def _update(self, sampling_instant_percent):
+        self.sampler.system.sampling_instant = sampling_instant_percent / 100
+        self.sampling_instant_text.setText(str(sampling_instant_percent))
+        self.sampling_instant_slider.setValue(sampling_instant_percent)
         self.update_signal.emit()
 
 

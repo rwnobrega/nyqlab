@@ -37,21 +37,22 @@ class WindowEye(QtWidgets.QDialog):
         Ns = self.parent.system.n_symbols
         s = self.parent.system.data_t[2]
         r = self.parent.system.data_t[5]
-        samp_inst = 0.5
+        s_inst = self.parent.system.sampling_instant
 
-        t = np.arange(-2, sps + 2) / sps
+        t = np.arange(-sps, 2*sps) / sps
 
         ax = self.figure.add_subplot(1, 1, 1)
-        ax.axhline(0.0, color='k')
-        ax.axvline(samp_inst, color='k', linewidth=2)
+        ax.axhline(0.0, color='k', linewidth=3)
+        ax.axvline(0.5, color='k', linewidth=3)
 
-        for i in range(Ns - 1):
-            ax.plot(t, s[i*sps + sps//2 - 2: (i+1)*sps + sps//2 + 2], 'b-', linewidth=2)
-            ax.plot(t, r[i*sps + sps//2 - 2: (i+1)*sps + sps//2 + 2], 'r-', linewidth=2)
+        for i in range(1, Ns):
+            ax.plot(t - s_inst, s[i*sps - sps//2: (i+2)*sps + sps//2], 'b-', linewidth=2)
+            ax.plot(t - s_inst, r[i*sps - sps//2: (i+2)*sps + sps//2], 'r-', linewidth=2)
 
         ax.grid()
         ax.margins(0.05)
-        ax.xaxis.set_ticks([0.00, 0.25, 0.50, 0.75, 1.00])
+        ax.xaxis.set_ticks(np.arange(-1.0, 2.0, step=0.25))
+        ax.set_xlim([-0.1, 1.1])
         ax.set_xlabel('$t / T_\mathrm{s}$')
 
         plt.tight_layout()
