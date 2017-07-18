@@ -115,7 +115,7 @@ class MLT3_Signaling(SequenceStateSignalingScheme):
 
 collection = collections.OrderedDict([
     ('Polar (Antipodal)', Polar_Signaling()),
-    ('Unipolar', Unipolar_Signaling()),
+    ('Unipolar (On-off)', Unipolar_Signaling()),
     ('Alternate Mark Inversion (AMI)', AMI_Signaling()),
     ('Multi-Level Transmit 3 (MLT-3)', MLT3_Signaling())
 ])
