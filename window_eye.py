@@ -45,7 +45,7 @@ class WindowEye(QtWidgets.QDialog):
         ax.axhline(0.0, color='k', linewidth=3)
         ax.axvline(0.5, color='k', linewidth=3)
 
-        for i in range(1, Ns):
+        for i in range(1, min(Ns, 100)):
             ax.plot(t - s_inst, s[i*sps - sps//2: (i+2)*sps + sps//2], 'b-', linewidth=2)
             ax.plot(t - s_inst, r[i*sps - sps//2: (i+2)*sps + sps//2], 'r-', linewidth=2)
 
