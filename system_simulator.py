@@ -1,6 +1,6 @@
 import numpy as np
-import scipy as sp
-import scipy.signal
+
+from scipy.signal import periodogram
 
 
 class Block:
@@ -41,8 +41,8 @@ class SystemSimulator:
 
         for (i, block) in enumerate(self.blocks):
             if block.out_type == 'C':
-                _, psd = sp.signal.periodogram(self.data_t[i], samp_freq, return_onesided=False, nfft=n_fft)
-                psd = sp.fftpack.fftshift(psd)
+                _, psd = periodogram(self.data_t[i], samp_freq, return_onesided=False, nfft=n_fft)
+                psd = np.fft.fftshift(psd)
                 self.data_f[i] = psd
 
     def processAxes(self):

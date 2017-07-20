@@ -1,5 +1,4 @@
 import numpy as np
-import scipy as sp
 
 from PyQt5 import QtCore, QtWidgets
 
@@ -40,9 +39,9 @@ class IdealLowpass_ChannelFrequency(ChannelFrequency):
         f = np.arange(-Ns//2, Ns//2) * (fs/Ns)
         Bt = self.bandwidth
         HC = 1.0 * ((-Bt <= f) & (f < Bt))
-        S = sp.fftpack.fftshift(sp.fftpack.fft(s)) / fs
+        S = np.fft.fftshift(np.fft.fft(s)) / fs
         R0 = S * HC
-        r = fs * sp.fftpack.ifft(sp.fftpack.ifftshift(R0))
+        r = fs * np.fft.ifft(np.fft.ifftshift(R0))
         r = np.real(r)
         return r
 
@@ -74,9 +73,9 @@ class FirstOrderLowpass_ChannelFrequency(ChannelFrequency):
         f0 = self.cutoff_frequency
         f = np.arange(-Ns//2, Ns//2) * (fs/Ns)
         HC = 1.0 / (1.0 + 1j * 2.0 * np.pi * f/f0)
-        S = sp.fftpack.fftshift(sp.fftpack.fft(s)) / fs
+        S = np.fft.fftshift(np.fft.fft(s)) / fs
         R0 = S * HC
-        r = fs * sp.fftpack.ifft(sp.fftpack.ifftshift(R0))
+        r = fs * np.fft.ifft(np.fft.ifftshift(R0))
         r = np.real(r)
         return r
 
@@ -108,9 +107,9 @@ class SecondOrderBandpass_ChannelFrequency(ChannelFrequency):
         f0 = self.cutoff_frequency
         f = np.arange(-Ns//2, Ns//2) * (fs/Ns)
         HC = (1j * 2.0 * np.pi * f) / (1.0 + 1j * 2.0 * np.pi * f/f0)
-        S = sp.fftpack.fftshift(sp.fftpack.fft(s)) / fs
+        S = np.fft.fftshift(np.fft.fft(s)) / fs
         R0 = S * HC
-        r = fs * sp.fftpack.ifft(sp.fftpack.ifftshift(R0))
+        r = fs * np.fft.ifft(np.fft.ifftshift(R0))
         r = np.real(r)
         return r
 
