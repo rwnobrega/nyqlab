@@ -113,8 +113,8 @@ class WindowScope(QtWidgets.QMainWindow):
     def update_visible(self):
         for (lines_t, lines_f, connection) in zip(self.plots_t, self.plots_f, self.parent.system_diagram.connections_d):
             plt.setp(lines_t + lines_f, visible=connection.visible)
-        plt.tight_layout()
         self.canvas.draw()
+        plt.tight_layout()
 
     def onEyeClick(self, idx):
         self.show_eye_diagram ^= True
