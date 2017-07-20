@@ -110,6 +110,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def initUI(self):
         self.setWindowTitle('NyqLab')
+        self.move(0, 0)
 
         # BER label
         self.ber_text = QtWidgets.QLabel()
