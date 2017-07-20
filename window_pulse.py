@@ -32,7 +32,7 @@ class WindowPulse(QtWidgets.QMainWindow):
         # Combo
         self.combo = QtWidgets.QComboBox()
         self.combo.addItem('TX pulse')
-        self.combo.addItem('Channel')
+        self.combo.addItem('Channel response')
         self.combo.activated[int].connect(self.onComboActivated)
 
         # Axis
@@ -65,7 +65,7 @@ class WindowPulse(QtWidgets.QMainWindow):
 
         if self.selected == 'TX pulse':
             self._plot_tx()
-        elif self.selected == 'Channel':
+        elif self.selected == 'Channel response':
             self._plot_ch()
 
         self.figure.subplots_adjust(left=0.10, right=0.95, top=0.94, bottom=0.15, wspace=0.40)
