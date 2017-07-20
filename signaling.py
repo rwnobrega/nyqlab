@@ -83,8 +83,10 @@ class AMI_Signaling(SequenceStateSignalingScheme):
                (1, 0): (1, 0.0), (1, 1): (0, -1.0)}
         super().__init__(finite_state_machine=fsm)
 
-    def decode(self, y):
-        return np.abs(y).astype(np.int)
+    def decode(self, y):  # Not optimal!
+        values = [0.0, 1.0]
+        thresholds = [0.5]
+        return unmap(slicer(np.abs(y), thresholds, values), values)
 
     def acorr(self, ell):
         if ell == 0:
