@@ -189,6 +189,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def compute_and_plot(self):
         self.compute()
         self.window_scope.plot()
+        self.window_pulse.plot()
 
     def compute(self):
         self.system.processData()

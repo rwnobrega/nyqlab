@@ -56,7 +56,7 @@ class WindowScope(QtWidgets.QMainWindow):
         widget = QtWidgets.QWidget(self)
         self.setCentralWidget(widget)
         widget.setLayout(layout)
-        self.resize(800, 600)
+        self.resize(800, 500)
 
     def plot(self):
         Ns = self.system.n_symbols
@@ -113,6 +113,7 @@ class WindowScope(QtWidgets.QMainWindow):
     def update_visible(self):
         for (lines_t, lines_f, connection) in zip(self.plots_t, self.plots_f, self.parent.system_diagram.connections_d):
             plt.setp(lines_t + lines_f, visible=connection.visible)
+        plt.tight_layout()
         self.canvas.draw()
 
     def onEyeClick(self, idx):
