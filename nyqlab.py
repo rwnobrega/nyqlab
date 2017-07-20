@@ -1,31 +1,20 @@
 #!/usr/bin/env python3
 
 import functools
-import os
 import sys
 
-import numpy as np
-
-from PyQt5 import QtCore, QtGui, QtWidgets
-
-import matplotlib
-matplotlib.use("Qt5Agg")
-
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
-
+from PyQt5 import QtGui, QtWidgets
 
 import sources, encoder, tx_filter, channels_frequency, channels_noise, rx_filter, sampler, decoder
 
 from system_simulator import SystemSimulator, Block
 from system_diagram import SystemDiagram, BlockD, ConnectionD
 
+from window_scope import WindowScope
 from window_pulse import WindowPulse
-from window_eye import WindowEye
 
 
-class Window(QtWidgets.QWidget):
+class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
 
@@ -33,8 +22,12 @@ class Window(QtWidgets.QWidget):
         self.setupSystemDiagram()
         self.setupOptions()
         self.initUI()
+        self.compute()
 
-        self.compute_and_plot()
+        self.window_scope = WindowScope(parent=self, system=self.system)
+        self.window_pulse = WindowPulse(parent=self, system=self.system)
+
+        self.showWindowScope()
 
     def setupSystem(self):
         blocks_s = [
@@ -86,13 +79,6 @@ class Window(QtWidgets.QWidget):
             'bit_rate': 'Bit rate [bit/s]',
         }
 
-        self.show_n_symbols = 20
-        self.show_psd = False
-        self.options_visualization = {
-            'show_n_symbols': 'Number of symbols to show',
-            'show_psd': 'Show power spectral density',
-        }
-
     def _getBlocksOptionsWidget(self, idx):
         block = self.system.blocks[idx]
         block_name = self.system_diagram.blocks_d[idx].name
@@ -125,18 +111,8 @@ class Window(QtWidgets.QWidget):
     def initUI(self):
         self.setWindowTitle('NyqLab')
 
-        # Figure
-        self.figure = plt.figure()
-        self.canvas = FigureCanvas(self.figure)
-        self.toolbar = NavigationToolbar(self.canvas, self)
-
         # BER label
-        self.ber_text = QtWidgets.QLabel('<b>BER</b>')
-
-        # Axis
-        self.ax_t = self.figure.add_subplot(2, 1, 1)
-        self.ax_f = self.figure.add_subplot(2, 1, 2)
-        self.update_axis(True)
+        self.ber_text = QtWidgets.QLabel()
 
         # Construct widgets for block options
         self.block_options = []
@@ -148,52 +124,39 @@ class Window(QtWidgets.QWidget):
 
         # General options frame
         self.panel_options_general = PanelOptions(self, 'General options', self.system, self.options_general)
-        self.panel_options_visualization = PanelOptions(self, 'Visualization options', self, self.options_visualization)
 
         # Toolbar
         action_options_general = QtWidgets.QAction(QtGui.QIcon.fromTheme('preferences-desktop'), 'General options', self)
         action_options_general.triggered.connect(self.showGeneralOptions)
 
+        action_view_scope = QtWidgets.QAction(QtGui.QIcon.fromTheme('utilities-system-monitor'), 'Scope', self)
+        action_view_scope.triggered.connect(self.showWindowScope)
+
         action_view_pulse = QtWidgets.QAction(QtGui.QIcon('media/pulse'), 'View pulse', self)
         action_view_pulse.triggered.connect(self.showWindowPulse)
 
-        action_view_eye = QtWidgets.QAction(QtGui.QIcon('media/eye'), 'View eye diagram', self)
-        action_view_eye.triggered.connect(self.showWindowEye)
-
         xtoolbar = QtWidgets.QToolBar()
         xtoolbar.addAction(action_options_general)
+        xtoolbar.addAction(action_view_scope)
         xtoolbar.addAction(action_view_pulse)
-        xtoolbar.addAction(action_view_eye)
 
         # Main layout
-        layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(self.toolbar)
-        layout.addWidget(self.canvas)
-        widget_right = QtWidgets.QWidget()
-        widget_right.setLayout(layout)
-
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(xtoolbar)
         layout.addWidget(self.system_diagram)
         for w in self.block_options:
             layout.addWidget(w)
         layout.addWidget(self.panel_options_general)
-        layout.addWidget(self.panel_options_visualization)
         layout.addWidget(self.ber_text)
 
-        widget_left = QtWidgets.QWidget()
-        widget_left.setLayout(layout)
-
-        layout = QtWidgets.QHBoxLayout()
-        layout.addWidget(widget_left, 1)
-        layout.addWidget(widget_right, 2)
-        self.setLayout(layout)
+        central_widget = QtWidgets.QWidget()
+        central_widget.setLayout(layout)
+        self.setCentralWidget(central_widget)
 
         self.showBlockOption(0)
 
     def showBlockOption(self, idx):
         self.panel_options_general.setVisible(False)
-        self.panel_options_visualization.setVisible(False)
         for (i, w) in enumerate(self.block_options):
             w.setVisible(i == idx)
 
@@ -201,7 +164,6 @@ class Window(QtWidgets.QWidget):
         for (i, w) in enumerate(self.block_options):
             w.setVisible(False)
         self.panel_options_general.setVisible(True)
-        self.panel_options_visualization.setVisible(True)
 
     def onBlockComboActivated(self, idx_block, idx_choice):
         block = self.system.blocks[idx_block]
@@ -216,80 +178,24 @@ class Window(QtWidgets.QWidget):
 
     def toggleSignal(self, idx):
         self.system_diagram.connections_d[idx].visible ^= True
-        self.update_visible()
+        self.window_scope.update_visible()
+
+    def showWindowScope(self):
+        self.window_scope.show()
 
     def showWindowPulse(self):
-        self.pulse_window = WindowPulse(parent=self)
-        self.pulse_window.exec_()
-
-    def showWindowEye(self):
-        self.eye_window = WindowEye(parent=self)
-        self.eye_window.exec_()
+        self.window_pulse.show()
 
     def compute_and_plot(self):
         self.compute()
-        self.plot()
+        self.window_scope.plot()
 
     def compute(self):
         self.system.processData()
         self.system.processSpectra()
         self.system.processAxes()
-
-    def update_axis(self, first_run=False):
-        Ns = self.show_n_symbols
-        Ts = 1 / self.system.symbol_rate
-
-        if first_run:
-            axis_t = [-Ts, Ns*Ts, -1.5, 1.5]
-            axis_f = [-5.0, 5.0, -0.5, 6.0]
-        else:
-            axis_t = self.ax_t.axis()
-            axis_f = self.ax_f.axis()
-
-        self.ax_t.cla()
-        self.ax_t.grid(True)
-        self.ax_t.margins(0.05)
-        self.ax_t.set_xlabel('$t$ [s]')
-        self.ax_t.axhline(0.0, color='k')
-        self.ax_t.axis(axis_t)
-
-        self.ax_f.cla()
-        self.ax_f.grid(True)
-        self.ax_f.margins(0.05)
-        self.ax_f.set_xlabel('$f$ [Hz]')
-        self.ax_f.axhline(0.0, color='k')
-        self.ax_f.axis(axis_f)
-
-    def plot(self):
-        self.update_axis()
-
-        self.plots_t = []
-        self.plots_f = []
-        for (data_t, data_f, block, connection) in zip(self.system.data_t, self.system.data_f, self.system.blocks, self.system_diagram.connections_d):
-            color = tuple(x / 255 for x in connection.color)
-            if block.out_type == 'C':
-                lines_t = [self.ax_t.plot(self.system.t, data_t, color=color, linewidth=2)]
-                lines_f = [self.ax_f.plot(self.system.f, data_f, color=color, linewidth=2)]
-            elif block.out_type == 'D':
-                x = np.repeat(self.system.tk, 2)
-                y = np.dstack((np.zeros(data_t.shape[0]), data_t)).flatten()
-                lines_t = [self.ax_t.step(x, y, color=color, linewidth=1),
-                           self.ax_t.scatter(x[1::2], y[1::2], color=color, linewidth=1)]
-                lines_f = []
-            self.plots_t.append(lines_t)
-            self.plots_f.append(lines_f)
-
-        self.ber_text.setText('<b>BER</b>: {:.2E}'.format(self.system.ber))
-
-        self.update_visible()
-
-    def update_visible(self):
-        for (lines_t, lines_f, connection) in zip(self.plots_t, self.plots_f, self.system_diagram.connections_d):
-            plt.setp(lines_t + lines_f, visible=connection.visible)
-        self.canvas.draw()
-
-    def closeEvent(self, event):
-        plt.close(self.figure)
+        ber_str = '{:.2E}'.format(self.system.ber) if self.system.ber != 0 else '0'
+        self.ber_text.setText('<b>BER</b>: {}'.format(ber_str))
 
 
 class PanelOptions(QtWidgets.QWidget):
@@ -323,14 +229,13 @@ class PanelOptions(QtWidgets.QWidget):
         if new_value != old_value:
             self.text[key].setText(str(new_value))
             setattr(self.obj, key, new_value)
-            self.parent.update_axis(True)
             self.parent.compute_and_plot()
 
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
 
-    main = Window()
-    main.show()
+    main_window = MainWindow()
+    main_window.show()
 
     sys.exit(app.exec_())

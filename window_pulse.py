@@ -1,34 +1,40 @@
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtGui, QtWidgets
+
+import matplotlib
+matplotlib.use("Qt5Agg")
 
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
 import numpy as np
-import scipy as sp
 
 
-class WindowPulse(QtWidgets.QDialog):
-    def __init__(self, parent):
+class WindowPulse(QtWidgets.QMainWindow):
+    def __init__(self, parent, system):
         super().__init__(parent)
+
         self.parent = parent
+        self.system = system
 
         self.initUI()
         self.plot()
 
     def initUI(self):
-        self.setWindowTitle('Pulse')
+        self.setWindowTitle('NyqLab: Pulse')
 
         # Figure
         self.figure = plt.figure()
         self.canvas = FigureCanvas(self.figure)
-        self.toolbar = NavigationToolbar(self.canvas, self)
+        toolbar = NavigationToolbar(self.canvas, self)
 
         layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(self.toolbar)
+        layout.addWidget(toolbar)
         layout.addWidget(self.canvas)
 
-        self.setLayout(layout)
+        widget = QtWidgets.QWidget(self)
+        self.setCentralWidget(widget)
+        widget.setLayout(layout)
         self.resize(800, 400)
 
     def plot(self):
@@ -43,7 +49,7 @@ class WindowPulse(QtWidgets.QDialog):
         fx = np.arange(-Nf//2, Nf//2) * (sps / Nf)
 
         p = pulse.pulse(tx)
-        P = sp.fftpack.fftshift(sp.fftpack.fft(p, Nf)) / sps
+        P = np.fft.fftshift(np.fft.fft(p, Nf)) / sps
 
         ax_t = self.figure.add_subplot(1, 2, 1)
         ax_f = self.figure.add_subplot(1, 2, 2)
@@ -65,6 +71,3 @@ class WindowPulse(QtWidgets.QDialog):
 
         plt.tight_layout()
         self.canvas.draw()
-
-    def closeEvent(self, event):
-        plt.close(self.figure)
