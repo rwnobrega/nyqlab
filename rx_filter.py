@@ -33,7 +33,7 @@ class Bypass_ReceiveFilter(ReceiveFilter):
 
 class MatchedFilter_ReceiveFilter(ReceiveFilter):
     def process(self, y):
-        pulse = self.system.pulse
+        pulse = self.system.blocks[2].box.pulse  # FIXME: Refactor
         sps = self.system.sps
         fa = self.system.samp_freq
         filt_len = pulse.filt_len

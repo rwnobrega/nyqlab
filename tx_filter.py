@@ -28,7 +28,6 @@ class PulseFormatter_TransmitFilter(TransmitFilter):
     pulse = list(pulses.collection.values())[0]
 
     def process(self, x):
-        self.system.pulse = self.pulse
         sps = self.system.sps
         filt_len = self.pulse.filt_len
         N = sps * filt_len

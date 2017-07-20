@@ -95,43 +95,8 @@ class FirstOrderLowpass_ChannelFrequency_Widget(ChannelFrequency_Widget):
         self.update_signal.emit()
 
 
-# Second order bandpass channel
-
-class SecondOrderBandpass_ChannelFrequency(ChannelFrequency):
-    def __init__(self, cutoff_frequency=2.0):
-        self.cutoff_frequency = cutoff_frequency
-
-    def process(self, s):
-        fs = self.system.samp_freq
-        Ns = len(s)
-        f0 = self.cutoff_frequency
-        f = np.arange(-Ns//2, Ns//2) * (fs/Ns)
-        HC = (1j * 2.0 * np.pi * f) / (1.0 + 1j * 2.0 * np.pi * f/f0)
-        S = np.fft.fftshift(np.fft.fft(s)) / fs
-        R0 = S * HC
-        r = fs * np.fft.ifft(np.fft.ifftshift(R0))
-        r = np.real(r)
-        return r
-
-
-class SecondOrderBandpass_ChannelFrequency_Widget(ChannelFrequency_Widget):
-    def initUI(self):
-        layout = QtWidgets.QHBoxLayout()
-        self.cutoff_frequency = QtWidgets.QLineEdit(str(self.channel.cutoff_frequency))
-        self.cutoff_frequency.editingFinished.connect(self.onChange)
-        layout.addWidget(QtWidgets.QLabel('Cutoff frequency [Hz]:'))
-        layout.addWidget(self.cutoff_frequency)
-        self.setLayout(layout)
-
-    def onChange(self):
-        self.channel.cutoff_frequency = float(self.cutoff_frequency.text())
-        self.cutoff_frequency.setText(str(self.channel.cutoff_frequency))
-        self.update_signal.emit()
-
-
 choices = [
     ('[Bypass]', Bypass_ChannelFrequency()),
     ('Ideal lowpass', IdealLowpass_ChannelFrequency()),
     ('First order lowpass', FirstOrderLowpass_ChannelFrequency()),
-    ('Second order bandpass', SecondOrderBandpass_ChannelFrequency()),
 ]
