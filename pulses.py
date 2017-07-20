@@ -7,8 +7,8 @@ from PyQt5 import QtCore, QtWidgets
 
 class Pulse:
     filt_len = 1
-    tx_lim = (-0.5, 1.5)
-    fx_lim = (-15.0, 15.0)
+    ax_t_lim = (-0.5, 1.5, -0.25, 1.25)
+    ax_f_lim = (-10.0, 10.0, -0.25, 1.25)
     is_square = False
 
     def widget(self):
@@ -44,6 +44,7 @@ class RectangularRZ_Pulse(Pulse):
 
 
 class Manchester_Pulse(Pulse):
+    ax_t_lim = (-0.5, 1.5, -1.25, 1.25)
     is_square = True
 
     def pulse(self, tx):
@@ -52,6 +53,7 @@ class Manchester_Pulse(Pulse):
 
 
 class Wal2_Pulse(Pulse):
+    ax_t_lim = (-0.5, 1.5, -1.25, 1.25)
     is_square = True
 
     def pulse(self, tx):
@@ -77,8 +79,8 @@ class Sinc_Pulse(Pulse):
 
     def update_properties(self):
         filt_len = self.filt_len
-        self.tx_lim = (filt_len / 2 - 15.0, filt_len / 2 + 15.0)
-        self.fx_lim = (-1.5, 1.5)
+        self.ax_t_lim = (filt_len / 2 - 7.5, filt_len / 2 + 7.5, -0.5, 1.25)
+        self.ax_f_lim = (-1.5, 1.5, -0.25, 1.25)
 
 
 class Sinc_Pulse_Widget(Pulse_Widget):
@@ -111,8 +113,8 @@ class SquaredSinc_Pulse(Pulse):
 
     def update_properties(self):
         filt_len = self.filt_len
-        self.tx_lim = (filt_len / 2 - 7.5, filt_len / 2 + 7.5)
-        self.fx_lim = (-1.5, 1.5)
+        self.ax_t_lim = (filt_len / 2 - 7.5, filt_len / 2 + 7.5, -0.5, 1.25)
+        self.ax_f_lim = (-1.5, 1.5, -0.25, 1.25)
 
 
 class SquaredSinc_Pulse_Widget(Sinc_Pulse_Widget):
@@ -134,8 +136,8 @@ class RaisedCosine_Pulse(Pulse):
 
     def update_properties(self):
         filt_len = self.filt_len
-        self.tx_lim = (filt_len / 2 - 7.5, filt_len / 2 + 7.5)
-        self.fx_lim = (-1.5, 1.5)
+        self.ax_t_lim = (filt_len / 2 - 7.5, filt_len / 2 + 7.5, -0.5, 1.25)
+        self.ax_f_lim = (-1.5, 1.5, -0.25, 1.25)
 
 
 class RaisedCosine_Pulse_Widget(Pulse_Widget):
@@ -209,8 +211,8 @@ class RootRaisedCosine_Pulse(Pulse):
 
     def update_properties(self):
         filt_len = self.filt_len
-        self.tx_lim = (filt_len / 2 - 7.5, filt_len / 2 + 7.5)
-        self.fx_lim = (-1.5, 1.5)
+        self.ax_t_lim = (filt_len / 2 - 7.5, filt_len / 2 + 7.5, -0.5, 1.25)
+        self.ax_f_lim = (-1.5, 1.5, -0.25, 1.25)
 
 
 class RootRaisedCosine_Pulse_Widget(RaisedCosine_Pulse_Widget):
