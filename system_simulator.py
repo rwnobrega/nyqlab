@@ -23,7 +23,12 @@ class SystemSimulator:
         self.seed = 0
         self.n_fft = 2**16
 
-    def processData(self):
+    def process(self):
+        self._processData()
+        self._processSpectra()
+        self._processAxes()
+
+    def _processData(self):
         np.random.seed(self.seed)
 
         for (i, block) in enumerate(self.blocks):
@@ -34,7 +39,7 @@ class SystemSimulator:
 
         self.ber = sum(1*(self.data_t[0] != self.data_t[-1])) / self.n_symbols  # TODO: So far, binary only
 
-    def processSpectra(self):
+    def _processSpectra(self):
         sps = self.sps
         samp_freq = self.samp_freq
         n_fft = self.n_fft
@@ -45,7 +50,7 @@ class SystemSimulator:
                 psd = np.fft.fftshift(psd)
                 self.data_f[i] = psd
 
-    def processAxes(self):
+    def _processAxes(self):
         sps = self.sps
         fa = self.samp_freq
         Nf = self.n_fft

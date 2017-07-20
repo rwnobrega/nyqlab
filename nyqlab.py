@@ -193,9 +193,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.window_pulse.plot()
 
     def compute(self):
-        self.system.processData()
-        self.system.processSpectra()
-        self.system.processAxes()
+        self.system.process()
         ber_str = '{:.2E}'.format(self.system.ber) if self.system.ber != 0 else '0'
         self.ber_text.setText('<b>BER</b>: {}'.format(ber_str))
 
