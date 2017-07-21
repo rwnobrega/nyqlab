@@ -9,6 +9,8 @@ from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as Navigatio
 
 import numpy as np
 
+from rx_filter import Bypass_ReceiveFilter
+
 
 class WindowPulse(QtWidgets.QMainWindow):
     def __init__(self, parent, system):
@@ -100,14 +102,13 @@ class WindowPulse(QtWidgets.QMainWindow):
         self.canvas.draw()
 
     def _plot_tx(self):
-        tx_pulse = self.system.blocks[2].box.pulse
-        delay = tx_pulse.filt_len/2
+        tx = self.system.blocks[2].box
 
-        self.ax_t.plot(self.t + delay, self.h_tx, 'k-', linewidth=2)
-        self.ax_t.axis(tx_pulse.ax_t_lim)
+        self.ax_t.plot(self.t + tx.pulse.filt_len/2, self.h_tx, 'k-', linewidth=2)
+        self.ax_t.axis(tx.pulse.ax_t_lim)
 
         self.ax_f.plot(self.f, abs(self.H_tx), 'k-', linewidth=2)
-        self.ax_f.axis(tx_pulse.ax_f_lim)
+        self.ax_f.axis(tx.pulse.ax_f_lim)
 
     def _plot_ch(self):
         self.ax_t.plot(self.t, self.h_ch, 'k-', linewidth=2)
@@ -117,14 +118,20 @@ class WindowPulse(QtWidgets.QMainWindow):
         self.ax_f.set_xlim([-6.0, 6.0])
 
     def _plot_ep(self):
-        tx_pulse = self.system.blocks[2].box.pulse
-        delay = tx_pulse.filt_len/2
+        tx = self.system.blocks[2].box
+        rx = self.system.blocks[5].box
 
-        self.ax_t.plot(self.t + delay, self.h_ep, 'k-', linewidth=2)
-        self.ax_t.axis(tx_pulse.ax_t_lim)
+        # FIXME: Refactor
+        t_lim = tx.pulse.ax_t_lim[:]
+        if not isinstance(rx, Bypass_ReceiveFilter):
+            t_lim[0] -= 1
+            t_lim[1] += 1
+
+        self.ax_t.plot(self.t + tx.pulse.filt_len/2, self.h_ep, 'k-', linewidth=2)
+        self.ax_t.axis(t_lim)
 
         self.ax_f.plot(self.f, abs(self.H_ep), 'k-', linewidth=2)
-        self.ax_f.axis(tx_pulse.ax_f_lim)
+        self.ax_f.axis(tx.pulse.ax_f_lim)
 
     def onComboActivated(self, idx):
         self.selected = self.combo.currentText()

@@ -18,9 +18,9 @@ class WindowScope(QtWidgets.QMainWindow):
         self.system = system
         self.show_eye_diagram = False
 
-        self.ax_t_lim_free = (-1.0, 21.0, -1.5, 1.5)
-        self.ax_t_lim_eyed = (-0.1, 1.1, -1.5, 1.5)
-        self.ax_f_lim = (-5.0, 5.0, -0.5, 6.0)
+        self.ax_t_lim_free = [-1.0, 21.0, -1.5, 1.5]
+        self.ax_t_lim_eyed = [-0.1, 1.1, -1.5, 1.5]
+        self.ax_f_lim = [-5.0, 5.0, -0.5, 6.0]
 
         self.initUI()
         self.plot()
