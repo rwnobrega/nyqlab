@@ -50,7 +50,7 @@ class WindowPulse(QtWidgets.QMainWindow):
 
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(widget_top)
-        layout.addWidget(self.canvas)
+        layout.addWidget(self.canvas, 1)
 
         widget = QtWidgets.QWidget(self)
         self.setCentralWidget(widget)

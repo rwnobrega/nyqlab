@@ -27,8 +27,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.window_scope = WindowScope(parent=self, system=self.system)
         self.window_pulse = WindowPulse(parent=self, system=self.system)
 
-        self.showWindowScope()
-
     def setupSystem(self):
         blocks_s = [
             Block(sources, 'D'),
@@ -237,5 +235,7 @@ if __name__ == '__main__':
 
     main_window = MainWindow()
     main_window.show()
+    main_window.showWindowScope()
+
 
     sys.exit(app.exec_())
