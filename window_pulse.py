@@ -33,6 +33,7 @@ class WindowPulse(QtWidgets.QMainWindow):
         self.combo = QtWidgets.QComboBox()
         self.combo.addItem('TX pulse')
         self.combo.addItem('Channel response')
+        self.combo.addItem('Effective pulse')
         self.combo.activated[int].connect(self.onComboActivated)
 
         # Axis
@@ -54,7 +55,32 @@ class WindowPulse(QtWidgets.QMainWindow):
         widget.setLayout(layout)
         self.resize(600, 400)
 
+    def compute(self):
+        sps = self.system.sps
+        Ns = 256
+        N = (Ns + 2) * sps
+
+        # Axes
+        self.t = np.arange(-N//2, N//2) / sps
+        self.f = np.arange(-N//2, N//2) * (sps / N)
+
+        # Impulse responses
+        impulse_d = np.zeros(Ns); impulse_d[Ns//2] = 1
+        impulse_c = np.zeros(N); impulse_c[N//2] = sps
+        self.h_tx = self.system.blocks[2].box.process(impulse_d)
+        self.h_ch = self.system.blocks[3].box.process(impulse_c)
+        self.h_rx = self.system.blocks[5].box.process(impulse_c)
+        self.h_ep = self.system.blocks[5].box.process(self.system.blocks[3].box.process(self.h_tx))
+
+        # Frequency responses
+        self.H_tx = np.fft.fftshift(np.fft.fft(self.h_tx)) / sps
+        self.H_ch = np.fft.fftshift(np.fft.fft(self.h_ch)) / sps
+        self.H_rx = np.fft.fftshift(np.fft.fft(self.h_rx)) / sps
+        self.H_ep = np.fft.fftshift(np.fft.fft(self.h_ep)) / sps
+
     def plot(self):
+        self.compute()
+
         self.ax_t.cla()
         self.ax_t.grid(True)
         self.ax_t.set_xlabel('$t / T_\mathrm{s}$')
@@ -67,55 +93,41 @@ class WindowPulse(QtWidgets.QMainWindow):
             self._plot_tx()
         elif self.selected == 'Channel response':
             self._plot_ch()
+        elif self.selected == 'Effective pulse':
+            self._plot_ep()
 
         self.figure.subplots_adjust(left=0.10, right=0.95, top=0.94, bottom=0.15, wspace=0.40)
         self.canvas.draw()
 
     def _plot_tx(self):
-        tx_pulse = self.system.blocks[2].box.pulse  # FIXME: Refactor
-
-        sps = self.system.sps
-        filt_len = tx_pulse.filt_len
-        Nt = (filt_len + 2) * sps
-        Nf = max(1024, Nt)
-
-        # Time domain
-        tx = np.arange(-sps, Nt - sps) / sps
-        h_tx = tx_pulse.pulse(tx)
-
-        # Frequency domain
-        fx = np.arange(-Nf//2, Nf//2) * (sps / Nf)
-        H_tx = np.fft.fftshift(np.fft.fft(h_tx, Nf)) / sps
+        tx_pulse = self.system.blocks[2].box.pulse
+        delay = tx_pulse.filt_len/2
 
         if tx_pulse.is_square:
-            self.ax_t.step(tx + filt_len//2, h_tx, 'k-', linewidth=2, where='post')
+            self.ax_t.step(self.t + delay, self.h_tx, 'k-', linewidth=2, where='post')
         else:
-            self.ax_t.plot(tx + filt_len//2, h_tx, 'k-', linewidth=2)
+            self.ax_t.plot(self.t + delay, self.h_tx, 'k-', linewidth=2)
         self.ax_t.axis(tx_pulse.ax_t_lim)
 
-        self.ax_f.plot(fx, abs(H_tx), 'k-', linewidth=2)
+        self.ax_f.plot(self.f, abs(self.H_tx), 'k-', linewidth=2)
         self.ax_f.axis(tx_pulse.ax_f_lim)
 
     def _plot_ch(self):
-        sps = self.system.sps
-        N = 128*sps
-
-        # Time domain
-        tx = np.arange(-N//2, N//2) / sps
-
-        impulse = np.zeros(N)
-        impulse[N//2] = sps
-        h_ch = self.system.blocks[3].box.process(impulse)  # FIXME: Refactor
-
-        # Frequency domain
-        fx = np.arange(-N//2, N//2) * (sps / N)
-        H_ch = np.fft.fftshift(np.fft.fft(h_ch, N)) / sps
-
-        self.ax_t.plot(tx, h_ch, 'k-', linewidth=2)
+        self.ax_t.plot(self.t, self.h_ch, 'k-', linewidth=2)
         self.ax_t.set_xlim([-2.0, 2.0])
 
-        self.ax_f.plot(fx, abs(H_ch), 'k-', linewidth=2)
+        self.ax_f.plot(self.f, abs(self.H_ch), 'k-', linewidth=2)
         self.ax_f.set_xlim([-6.0, 6.0])
+
+    def _plot_ep(self):
+        tx_pulse = self.system.blocks[2].box.pulse
+        delay = tx_pulse.filt_len/2
+
+        self.ax_t.plot(self.t + delay, self.h_ep, 'k-', linewidth=2)
+        self.ax_t.axis(tx_pulse.ax_t_lim)
+
+        self.ax_f.plot(self.f, abs(self.H_ep), 'k-', linewidth=2)
+        self.ax_f.axis(tx_pulse.ax_f_lim)
 
     def onComboActivated(self, idx):
         self.selected = self.combo.currentText()
