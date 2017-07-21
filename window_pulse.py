@@ -123,11 +123,13 @@ class WindowPulse(QtWidgets.QMainWindow):
 
         # FIXME: Refactor
         t_lim = tx.pulse.ax_t_lim[:]
+        delay = tx.pulse.filt_len/2
         if not isinstance(rx, Bypass_ReceiveFilter):
-            t_lim[0] -= 1
-            t_lim[1] += 1
+            t_lim[0] -= 0.5
+            t_lim[1] += 1.5
+            delay += 0.5
 
-        self.ax_t.plot(self.t + tx.pulse.filt_len/2, self.h_ep, 'k-', linewidth=2)
+        self.ax_t.plot(self.t + delay, self.h_ep, 'k-', linewidth=2)
         self.ax_t.axis(t_lim)
 
         self.ax_f.plot(self.f, abs(self.H_ep), 'k-', linewidth=2)
