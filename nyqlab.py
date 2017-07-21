@@ -136,14 +136,14 @@ class MainWindow(QtWidgets.QMainWindow):
         action_view_pulse = QtWidgets.QAction(QtGui.QIcon('media/pulse'), 'View pulse', self)
         action_view_pulse.triggered.connect(self.showWindowPulse)
 
-        xtoolbar = QtWidgets.QToolBar()
-        xtoolbar.addAction(action_options_general)
-        xtoolbar.addAction(action_view_scope)
-        xtoolbar.addAction(action_view_pulse)
+        toolbar = QtWidgets.QToolBar()
+        toolbar.addAction(action_options_general)
+        toolbar.addAction(action_view_scope)
+        toolbar.addAction(action_view_pulse)
 
         # Main layout
         layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(xtoolbar)
+        layout.addWidget(toolbar)
         layout.addWidget(self.system_diagram)
         for w in self.block_options:
             layout.addWidget(w)
