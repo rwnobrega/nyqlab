@@ -16,7 +16,7 @@ class SystemSimulator:
         self.data_t = [None for _ in range(len(blocks))]
         self.data_f = [None for _ in range(len(blocks))]
 
-        self._sps = 32
+        self._sps = 64
         self._bit_rate = 1.0
         self.update_secondary_properties()
 

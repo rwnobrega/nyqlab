@@ -9,7 +9,6 @@ class Pulse:
     filt_len = 1
     ax_t_lim = (-0.5, 1.5, -0.25, 1.25)
     ax_f_lim = (-10.0, 10.0, -0.25, 1.25)
-    is_square = False
 
     def widget(self):
         try:
@@ -30,22 +29,17 @@ class Pulse_Widget(QtWidgets.QWidget):
 # Pulses
 
 class RectangularNRZ_Pulse(Pulse):
-    is_square = True
-
     def pulse(self, tx):
         return 1.0 * ((0.0 <= tx) & (tx < 1.0))
 
 
 class RectangularRZ_Pulse(Pulse):
-    is_square = True
-
     def pulse(self, tx):
         return 1.0 * ((0.0 <= tx) & (tx < 0.5))
 
 
 class Manchester_Pulse(Pulse):
     ax_t_lim = (-0.5, 1.5, -1.25, 1.25)
-    is_square = True
 
     def pulse(self, tx):
         return  1.0 * ((0.0 <= tx) & (tx < 0.5)) + \
@@ -54,7 +48,6 @@ class Manchester_Pulse(Pulse):
 
 class Wal2_Pulse(Pulse):
     ax_t_lim = (-0.5, 1.5, -1.25, 1.25)
-    is_square = True
 
     def pulse(self, tx):
         return -1.0 * ((0.0  <= tx) & (tx < 0.25)) + \

@@ -103,10 +103,7 @@ class WindowPulse(QtWidgets.QMainWindow):
         tx_pulse = self.system.blocks[2].box.pulse
         delay = tx_pulse.filt_len/2
 
-        if tx_pulse.is_square:
-            self.ax_t.step(self.t + delay, self.h_tx, 'k-', linewidth=2, where='post')
-        else:
-            self.ax_t.plot(self.t + delay, self.h_tx, 'k-', linewidth=2)
+        self.ax_t.plot(self.t + delay, self.h_tx, 'k-', linewidth=2)
         self.ax_t.axis(tx_pulse.ax_t_lim)
 
         self.ax_f.plot(self.f, abs(self.H_tx), 'k-', linewidth=2)
