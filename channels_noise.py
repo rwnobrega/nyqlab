@@ -45,16 +45,31 @@ class AWGN_ChannelNoise(ChannelNoise):
 
 class AWGN_ChannelNoise_Widget(ChannelNoise_Widget):
     def initUI(self):
+        self.snr_db_text = QtWidgets.QLineEdit()
+        self.snr_db_text.editingFinished.connect(self.onChange_snr_db_text)
+
+        self.snr_db_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
+        self.snr_db_slider.setRange(-50, 500)
+        self.snr_db_slider.valueChanged[int].connect(self.onChange_snr_db_slider)
+
         layout = QtWidgets.QHBoxLayout()
-        self.snr_db = QtWidgets.QLineEdit(str(self.channel.snr_db))
-        self.snr_db.editingFinished.connect(self.onChange)
-        layout.addWidget(QtWidgets.QLabel('SNR [dB]:'))
-        layout.addWidget(self.snr_db)
+        layout.addWidget(QtWidgets.QLabel('SNR [dB]:'), 1)
+        layout.addWidget(self.snr_db_text, 1)
+        layout.addWidget(self.snr_db_slider, 2)
         self.setLayout(layout)
 
-    def onChange(self):
-        self.channel.snr_db = float(self.snr_db.text())
-        self.snr_db.setText(str(self.channel.snr_db))
+        self._update(self.channel.snr_db)
+
+    def onChange_snr_db_text(self):
+        self._update(float(self.snr_db_text.text()))
+
+    def onChange_snr_db_slider(self):
+        self._update(self.snr_db_slider.value() / 10.0)
+
+    def _update(self, snr_db):
+        self.channel.snr_db = snr_db
+        self.snr_db_text.setText(str(snr_db))
+        self.snr_db_slider.setValue(int(10.0 * snr_db))
         self.update_signal.emit()
 
 

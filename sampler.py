@@ -48,7 +48,6 @@ class Simple_Sampler_Widget(Sampler_Widget):
         layout.addWidget(QtWidgets.QLabel('Sampling instant [% of Ts]:'), 1)
         layout.addWidget(self.sampling_instant_text, 1)
         layout.addWidget(self.sampling_instant_slider, 2)
-
         self.setLayout(layout)
 
         self._update(0)
