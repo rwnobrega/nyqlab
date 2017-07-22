@@ -78,19 +78,19 @@ class Sinc_Pulse(Pulse):
 
 class Sinc_Pulse_Widget(Pulse_Widget):
     def initUI(self):
-        self.text_filt_len = QtWidgets.QLineEdit(str(self.pulse.filt_len))
-        self.text_filt_len.editingFinished.connect(self.onChange_text_filt_len)
+        self.filt_len_text = QtWidgets.QLineEdit(str(self.pulse.filt_len))
+        self.filt_len_text.editingFinished.connect(self.onChange_filt_len_text)
 
         layout = QtWidgets.QHBoxLayout()
         layout.addWidget(QtWidgets.QLabel('Filter length [Ts]:'), 1)
-        layout.addWidget(self.text_filt_len, 2)
+        layout.addWidget(self.filt_len_text, 2)
 
         self.setLayout(layout)
 
-    def onChange_text_filt_len(self):
-        self.pulse.filt_len = int(self.text_filt_len.text())
+    def onChange_filt_len_text(self):
+        self.pulse.filt_len = int(self.filt_len_text.text())
         self.pulse.update_properties()
-        self.text_filt_len.setText(str(self.pulse.filt_len))
+        self.filt_len_text.setText(str(self.pulse.filt_len))
         self.update_signal.emit()
 
 
@@ -135,49 +135,49 @@ class RaisedCosine_Pulse(Pulse):
 
 class RaisedCosine_Pulse_Widget(Pulse_Widget):
     def initUI(self):
-        self.text_filt_len = QtWidgets.QLineEdit(str(self.pulse.filt_len))
-        self.text_filt_len.editingFinished.connect(self.onChange_text_filt_len)
+        self.filt_len_text = QtWidgets.QLineEdit()
+        self.filt_len_text.editingFinished.connect(
+            lambda: self._update('filt_len', int(self.filt_len_text.text()))
+        )
 
-        self.text_rolloff = QtWidgets.QLineEdit(str(self.pulse.rolloff))
-        self.text_rolloff.editingFinished.connect(self.onChange_text_rolloff)
+        self.rolloff_text = QtWidgets.QLineEdit()
+        self.rolloff_text.editingFinished.connect(
+            lambda: self._update('rolloff', float(self.rolloff_text.text()))
+        )
 
-        self.slider_rolloff = QtWidgets.QSlider(QtCore.Qt.Horizontal)
-        self.slider_rolloff.setRange(0, 100)
-        self.slider_rolloff.setValue(int(100 * self.pulse.rolloff))
-        self.slider_rolloff.valueChanged[int].connect(self.onChange_slider_rolloff)
+        self.rolloff_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
+        self.rolloff_slider.setRange(0, 100)
+        self.rolloff_slider.valueChanged[int].connect(
+            lambda: self._update('rolloff', self.rolloff_slider.value() / 100)
+        )
 
         layout0 = QtWidgets.QHBoxLayout()
         layout0.addWidget(QtWidgets.QLabel('Filter length [Ts]:'), 1)
-        layout0.addWidget(self.text_filt_len, 2)
+        layout0.addWidget(self.filt_len_text, 2)
 
         layout1 = QtWidgets.QHBoxLayout()
         layout1.addWidget(QtWidgets.QLabel('Rolloff factor:'), 1)
-        layout1.addWidget(self.text_rolloff, 1)
-        layout1.addWidget(self.slider_rolloff, 2)
+        layout1.addWidget(self.rolloff_text, 1)
+        layout1.addWidget(self.rolloff_slider, 2)
 
         layout = QtWidgets.QVBoxLayout()
         layout.addLayout(layout0)
         layout.addLayout(layout1)
         self.setLayout(layout)
 
-    def onChange_text_filt_len(self):
-        self.pulse.filt_len = int(self.text_filt_len.text())
-        self.pulse.update_properties()
-        self.text_filt_len.setText(str(self.pulse.filt_len))
-        self.update_signal.emit()
+        self._update('filt_len', self.pulse.filt_len)
+        self._update('rolloff', self.pulse.rolloff)
 
-    def onChange_text_rolloff(self):
-        self.pulse.rolloff = float(self.text_rolloff.text())
-        self.text_rolloff.setText(str(self.pulse.rolloff))
-        self.slider_rolloff.setValue(int(100 * self.pulse.rolloff))
+    def _update(self, key, value):
+        if key == 'filt_len':
+            self.pulse.filt_len = value
+            self.pulse.update_properties()
+            self.filt_len_text.setText(str(value))
+        elif key == 'rolloff':
+            self.pulse.rolloff = float(value)
+            self.rolloff_text.setText(str(value))
+            self.rolloff_slider.setValue(int(100 * value))
         self.update_signal.emit()
-
-    def onChange_slider_rolloff(self):
-        self.pulse.rolloff = float(self.slider_rolloff.value()) / 100
-        self.text_rolloff.setText(str(self.pulse.rolloff))
-        self.slider_rolloff.setValue(int(100 * self.pulse.rolloff))
-        self.update_signal.emit()
-
 
 class RootRaisedCosine_Pulse(Pulse):
     def __init__(self, filt_len=64, rolloff=0.5):
