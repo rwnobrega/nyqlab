@@ -9,6 +9,7 @@ class BlockD:
             alias = self.name
         self.alias = alias
 
+
 class ConnectionD:
     def __init__(self, name, path, color, visible=False):
         self.name = name

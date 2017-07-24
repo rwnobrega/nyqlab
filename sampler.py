@@ -10,6 +10,7 @@ class Sampler:
         except KeyError:
             return QtWidgets.QLabel('<i>No options available for this sampling scheme.</i>')
 
+
 class Sampler_Widget(QtWidgets.QWidget):
     update_signal = QtCore.pyqtSignal()
 

@@ -179,6 +179,7 @@ class RaisedCosine_Pulse_Widget(Pulse_Widget):
             self.rolloff_slider.setValue(int(100 * value))
         self.update_signal.emit()
 
+
 class RootRaisedCosine_Pulse(Pulse):
     def __init__(self, filt_len=64, rolloff=0.5):
         self.filt_len = filt_len
