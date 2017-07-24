@@ -48,23 +48,36 @@ class IdealLowpass_ChannelFrequency(ChannelFrequency):
 
 class IdealLowpass_ChannelFrequency_Widget(ChannelFrequency_Widget):
     def initUI(self):
+        self.bandwidth_text = QtWidgets.QLineEdit()
+        self.bandwidth_text.editingFinished.connect(
+            lambda: self._update(float(self.bandwidth_text.text()))
+        )
+
+        self.bandwidth_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
+        self.bandwidth_slider.setRange(0, 100)
+        self.bandwidth_slider.valueChanged[int].connect(
+            lambda: self._update(self.bandwidth_slider.value() / 10)
+        )
+
         layout = QtWidgets.QHBoxLayout()
-        self.bandwidth = QtWidgets.QLineEdit(str(self.channel.bandwidth))
-        self.bandwidth.editingFinished.connect(self.onChange)
-        layout.addWidget(QtWidgets.QLabel('Bandwidth [Hz]:'))
-        layout.addWidget(self.bandwidth)
+        layout.addWidget(QtWidgets.QLabel('Bandwidth [Hz]:'), 1)
+        layout.addWidget(self.bandwidth_text, 1)
+        layout.addWidget(self.bandwidth_slider, 2)
         self.setLayout(layout)
 
-    def onChange(self):
-        self.channel.bandwidth = float(self.bandwidth.text())
-        self.bandwidth.setText(str(self.channel.bandwidth))
+        self._update(self.channel.bandwidth)
+
+    def _update(self, value):
+        self.channel.bandwidth = value
+        self.bandwidth_text.setText(str(value))
+        self.bandwidth_slider.setValue(int(10 * value))
         self.update_signal.emit()
 
 
 # First order lowpass channel
 
 class FirstOrderLowpass_ChannelFrequency(ChannelFrequency):
-    def __init__(self, cutoff_frequency=2.0):
+    def __init__(self, cutoff_frequency=5.0):
         self.cutoff_frequency = cutoff_frequency
 
     def process(self, s):
@@ -82,16 +95,29 @@ class FirstOrderLowpass_ChannelFrequency(ChannelFrequency):
 
 class FirstOrderLowpass_ChannelFrequency_Widget(ChannelFrequency_Widget):
     def initUI(self):
+        self.cutoff_frequency_text = QtWidgets.QLineEdit()
+        self.cutoff_frequency_text.editingFinished.connect(
+            lambda: self._update(float(self.cutoff_frequency_text.text()))
+        )
+
+        self.cutoff_frequency_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
+        self.cutoff_frequency_slider.setRange(0, 200)
+        self.cutoff_frequency_slider.valueChanged[int].connect(
+            lambda: self._update(self.cutoff_frequency_slider.value() / 10)
+        )
+
         layout = QtWidgets.QHBoxLayout()
-        self.cutoff_frequency = QtWidgets.QLineEdit(str(self.channel.cutoff_frequency))
-        self.cutoff_frequency.editingFinished.connect(self.onChange)
-        layout.addWidget(QtWidgets.QLabel('Cutoff frequency [Hz]:'))
-        layout.addWidget(self.cutoff_frequency)
+        layout.addWidget(QtWidgets.QLabel('Cutoff frequency [Hz]:'), 1)
+        layout.addWidget(self.cutoff_frequency_text, 1)
+        layout.addWidget(self.cutoff_frequency_slider, 2)
         self.setLayout(layout)
 
-    def onChange(self):
-        self.channel.cutoff_frequency = float(self.cutoff_frequency.text())
-        self.cutoff_frequency.setText(str(self.channel.cutoff_frequency))
+        self._update(self.channel.cutoff_frequency)
+
+    def _update(self, value):
+        self.channel.cutoff_frequency = value + 1e-12  # Because of numerical issues
+        self.cutoff_frequency_text.setText(str(value))
+        self.cutoff_frequency_slider.setValue(int(10 * value))
         self.update_signal.emit()
 
 
