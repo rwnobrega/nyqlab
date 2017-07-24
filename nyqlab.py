@@ -191,9 +191,19 @@ class MainWindow(QtWidgets.QMainWindow):
         self.window_pulse.plot()
 
     def compute(self):
+        def _format_ber(value):
+            if value == 0:
+                return '0'
+            elif value >= 1e-2:
+                f = '{:.3g}'.format(100 * value)
+                if '.' not in f:
+                    f += '.0'
+                return f.ljust(4, '0') + '%'
+            else:
+                return '{:.2e}'.format(value)
+
         self.system.process()
-        ber_str = '{:.2E}'.format(self.system.ber) if self.system.ber != 0 else '0'
-        self.ber_text.setText('<b>BER</b>: {}'.format(ber_str))
+        self.ber_text.setText('<b>BER:</b> ' + _format_ber(self.system.ber))
 
 
 class PanelOptions(QtWidgets.QWidget):
