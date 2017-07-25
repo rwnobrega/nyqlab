@@ -23,7 +23,7 @@ class BitSource_Widget(QtWidgets.QWidget):
 # Random bits
 
 class Random_BitSource(BitSource):
-    def __init__(self, n_bits=20):
+    def __init__(self, n_bits=500):
         self.n_bits = n_bits
 
     def process(self):

@@ -20,7 +20,7 @@ class WindowScope(QtWidgets.QMainWindow):
 
         self.ax_t_lim_free = [-1.0, 21.0, -1.5, 1.5]
         self.ax_t_lim_eyed = [-0.1, 1.1, -1.5, 1.5]
-        self.ax_f_lim = [-5.0, 5.0, -0.5, 6.0]
+        self.ax_f_lim = [-3.0, 3.0, -60.0, 10.0]
 
         self.initUI()
         self.plot()
@@ -103,7 +103,7 @@ class WindowScope(QtWidgets.QMainWindow):
         for (data_f, block, connection) in zip(self.system.data_f, self.system.blocks, self.parent.system_diagram.connections_d):
             color = tuple(x / 255 for x in connection.color)
             if block.out_type == 'C':
-                lines_f = [self.ax_f.plot(f, data_f, color=color, linewidth=2)]
+                lines_f = [self.ax_f.plot(f, 10.0*np.log10(data_f), color=color, linewidth=2)]
             else:
                 lines_f = []
             self.plots_f.append(lines_f)

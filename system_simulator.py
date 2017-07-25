@@ -1,6 +1,6 @@
 import numpy as np
 
-from scipy.signal import periodogram
+from scipy.signal import welch
 
 
 class Block:
@@ -40,28 +40,23 @@ class SystemSimulator:
         self.ber = sum(1*(self.data_t[0] != self.data_t[-1])) / self.n_symbols  # TODO: So far, binary only
 
     def _processSpectra(self):
-        sps = self.sps
-        samp_freq = self.samp_freq
-        n_fft = self.n_fft
+        fa = self.samp_freq
+        Nf = self.n_fft
+        Nt = (self.n_symbols + 2) * self.sps
 
         for (i, block) in enumerate(self.blocks):
             if block.out_type == 'C':
-                _, psd = periodogram(self.data_t[i], samp_freq, return_onesided=False, nfft=n_fft)
-                psd = np.fft.fftshift(psd)
-                self.data_f[i] = psd
+                _, psd = welch(self.data_t[i], fs=fa, nperseg=min(Nf, Nt), return_onesided=False, nfft=Nf)
+                self.data_f[i] = np.fft.fftshift(psd)
 
     def _processAxes(self):
-        sps = self.sps
         fa = self.samp_freq
+        Ts = 1 / self.symbol_rate
         Nf = self.n_fft
-        Rs = self.symbol_rate
-        Ts = 1 / Rs
-        Ns = self.n_symbols
-        instants = self.instants
+        Nt = (self.n_symbols + 2) * self.sps
 
-        Nt = (Ns + 2) * sps
         self.t = np.arange(Nt) / fa - Ts
-        self.tk = self.t[instants]
+        self.tk = self.t[self.instants]
         self.f = np.arange(-Nf//2, Nf//2) * (fa / Nf)
 
     @property
