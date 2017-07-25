@@ -111,11 +111,13 @@ class WindowPulse(QtWidgets.QMainWindow):
         self.ax_f.axis(tx.pulse.ax_f_lim)
 
     def _plot_ch(self):
+        ch = self.system.blocks[3].box
+
         self.ax_t.plot(self.t, self.h_ch, 'k-', linewidth=2)
-        self.ax_t.set_xlim([-2.0, 2.0])
+        self.ax_t.axis(ch.ax_t_lim)
 
         self.ax_f.plot(self.f, abs(self.H_ch), 'k-', linewidth=2)
-        self.ax_f.set_xlim([-6.0, 6.0])
+        self.ax_f.axis(ch.ax_f_lim)
 
     def _plot_ep(self):
         tx = self.system.blocks[2].box

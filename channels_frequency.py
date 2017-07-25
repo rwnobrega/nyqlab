@@ -4,6 +4,9 @@ from PyQt5 import QtCore, QtWidgets
 
 
 class ChannelFrequency:
+    ax_f_lim = [-6.0, 6.0, -0.25, 1.25]
+    ax_t_lim = [-2.0, 2.0, -2.0, 6.0]
+
     def widget(self):
         try:
             return globals()[self.__class__.__name__ + '_Widget'](self)
@@ -77,6 +80,8 @@ class IdealLowpass_ChannelFrequency_Widget(ChannelFrequency_Widget):
 # First order lowpass channel
 
 class FirstOrderLowpass_ChannelFrequency(ChannelFrequency):
+    ax_t_lim = [-0.5, 2.0, -2.0, 6.0]
+
     def __init__(self, cutoff_frequency=5.0):
         self.cutoff_frequency = cutoff_frequency
 
