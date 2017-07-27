@@ -35,6 +35,7 @@ class WindowPulse(QtWidgets.QMainWindow):
         self.combo = QtWidgets.QComboBox()
         self.combo.addItem('TX pulse')
         self.combo.addItem('Channel response')
+        self.combo.addItem('RX pulse')
         self.combo.addItem('Effective pulse')
         self.combo.activated[int].connect(self.onComboActivated)
 
@@ -95,6 +96,8 @@ class WindowPulse(QtWidgets.QMainWindow):
             self._plot_tx()
         elif self.selected == 'Channel response':
             self._plot_ch()
+        elif self.selected == 'RX pulse':
+            self._plot_rx()
         elif self.selected == 'Effective pulse':
             self._plot_ep()
 
@@ -118,6 +121,31 @@ class WindowPulse(QtWidgets.QMainWindow):
 
         self.ax_f.plot(self.f, abs(self.H_ch), 'k-', linewidth=2)
         self.ax_f.axis(ch.ax_f_lim)
+
+    def _plot_rx(self):
+        # FIXME: Refactor
+        sps = self.system.sps
+
+        tx = self.system.blocks[2].box
+        rx = self.system.blocks[5].box
+
+        delay = 0.0
+        if isinstance(rx, Bypass_ReceiveFilter):
+            t_lim = [-2.0, 2.0, -2.0, 6.0]
+            f_lim = [-6.0, 6.0, -0.25, 1.25]
+            delay -= 0.5
+        else:
+            factor = np.sum(self.h_rx**2) / sps
+            t_lim = np.array(tx.pulse.ax_t_lim)
+            f_lim = np.array(tx.pulse.ax_f_lim)
+            t_lim[3:] *= factor
+            f_lim[3:] *= factor
+
+        self.ax_t.plot(self.t + tx.pulse.filt_len/2 + delay, self.h_rx, 'k-', linewidth=2)
+        self.ax_t.axis(t_lim)
+
+        self.ax_f.plot(self.f, abs(self.H_rx), 'k-', linewidth=2)
+        self.ax_f.axis(f_lim)
 
     def _plot_ep(self):
         tx = self.system.blocks[2].box

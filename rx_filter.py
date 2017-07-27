@@ -16,9 +16,9 @@ class ReceiveFilter:
 class ReceiveFilter_Widget(QtWidgets.QWidget):
     update_signal = QtCore.pyqtSignal()
 
-    def __init__(self, tx_filter):
+    def __init__(self, rx_filter):
         super().__init__()
-        self.tx_filter = tx_filter
+        self.rx_filter = rx_filter
         self.initUI()
 
 
