@@ -31,10 +31,9 @@ class PulseFormatter_TransmitFilter(TransmitFilter):
         sps = self.system.sps
         filt_len = self.pulse.filt_len
         N = sps * filt_len
+        t = np.arange(N) / sps
 
-        tx = np.arange(N) / sps
-
-        p = self.pulse.pulse(tx)
+        p = self.pulse.pulse(t)
         w = np.zeros((len(x) + 2) * sps)
         w[sps : -sps : sps] = x
 

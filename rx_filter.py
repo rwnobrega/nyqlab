@@ -39,10 +39,9 @@ class MatchedFilter_ReceiveFilter(ReceiveFilter):
         filt_len = pulse.filt_len
         N = sps * filt_len
         delay = (N - 1) / fa
+        t = np.arange(N) / sps
 
-        tx = np.arange(N) / sps
-
-        p = pulse.pulse(-tx + delay)
+        p = pulse.pulse(-t + delay)
         p /= np.sum(np.abs(p)**2) / sps
 
         r = np.convolve(y, p) / sps

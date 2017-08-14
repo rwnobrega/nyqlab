@@ -29,35 +29,35 @@ class Pulse_Widget(QtWidgets.QWidget):
 # Pulses
 
 class RectangularNRZ_Pulse(Pulse):
-    def pulse(self, tx):
-        return 1.0 * ((0.0 <= tx) & (tx < 1.0))
+    def pulse(self, t):
+        return 1.0 * ((0.0 <= t) & (t < 1.0))
 
 
 class RectangularRZ_Pulse(Pulse):
-    def pulse(self, tx):
-        return 1.0 * ((0.0 <= tx) & (tx < 0.5))
+    def pulse(self, t):
+        return 1.0 * ((0.0 <= t) & (t < 0.5))
 
 
 class Manchester_Pulse(Pulse):
     ax_t_lim = [-0.5, 1.5, -1.25, 1.25]
 
-    def pulse(self, tx):
-        return  1.0 * ((0.0 <= tx) & (tx < 0.5)) + \
-               -1.0 * ((0.5 <= tx) & (tx < 1.0))
+    def pulse(self, t):
+        return  1.0 * ((0.0 <= t) & (t < 0.5)) + \
+               -1.0 * ((0.5 <= t) & (t < 1.0))
 
 
 class Wal2_Pulse(Pulse):
     ax_t_lim = [-0.5, 1.5, -1.25, 1.25]
 
-    def pulse(self, tx):
-        return -1.0 * ((0.0  <= tx) & (tx < 0.25)) + \
-                1.0 * ((0.25 <= tx) & (tx < 0.75)) + \
-               -1.0 * ((0.75 <= tx) & (tx < 1.00))
+    def pulse(self, t):
+        return -1.0 * ((0.0  <= t) & (t < 0.25)) + \
+                1.0 * ((0.25 <= t) & (t < 0.75)) + \
+               -1.0 * ((0.75 <= t) & (t < 1.00))
 
 
 class Triangular_Pulse(Pulse):
-    def pulse(self, tx):
-        return (1.0 - abs(2.0*tx - 1.0)) * ((0.0 <= tx) & (tx < 1.0))
+    def pulse(self, t):
+        return (1.0 - abs(2.0*t - 1.0)) * ((0.0 <= t) & (t < 1.0))
 
 
 class Sinc_Pulse(Pulse):
@@ -65,10 +65,10 @@ class Sinc_Pulse(Pulse):
         self.filt_len = filt_len
         self.update_properties()
 
-    def pulse(self, tx):
+    def pulse(self, t):
         t0 = self.filt_len / 2
-        tx -= t0
-        return np.sinc(tx) * ((-t0 <= tx) & (tx < t0))
+        t -= t0
+        return np.sinc(t) * ((-t0 <= t) & (t < t0))
 
     def update_properties(self):
         filt_len = self.filt_len
@@ -99,10 +99,10 @@ class SquaredSinc_Pulse(Pulse):
         self.filt_len = filt_len
         self.update_properties()
 
-    def pulse(self, tx):
+    def pulse(self, t):
         t0 = self.filt_len / 2
-        tx -= t0
-        return np.sinc(tx)**2 * ((-t0 <= tx) & (tx < t0))
+        t -= t0
+        return np.sinc(t)**2 * ((-t0 <= t) & (t < t0))
 
     def update_properties(self):
         filt_len = self.filt_len
@@ -120,12 +120,12 @@ class RaisedCosine_Pulse(Pulse):
         self.rolloff = rolloff
         self.update_properties()
 
-    def pulse(self, tx):
+    def pulse(self, t):
         t0 = self.filt_len / 2
-        tx -= t0
+        t -= t0
         r = self.rolloff + 1.0e-12  # Because of numerical issues
-        p = np.sinc(tx) * (np.cos(np.pi*r*tx)) / (1.0 - 4.0 * r**2 * tx**2)
-        return p * ((-t0 <= tx) & (tx < t0))
+        p = np.sinc(t) * (np.cos(np.pi*r*t)) / (1.0 - 4.0 * r**2 * t**2)
+        return p * ((-t0 <= t) & (t < t0))
 
     def update_properties(self):
         filt_len = self.filt_len
@@ -186,20 +186,20 @@ class RootRaisedCosine_Pulse(Pulse):
         self.rolloff = rolloff
         self.update_properties()
 
-    def pulse(self, tx):
+    def pulse(self, t):
         t0 = self. filt_len / 2
 
-        tx -= t0
+        t -= t0
         r = self.rolloff + 1.0e-12  # Because of numerical issues
 
         @np.vectorize
-        def _pulse(tx):
-            if tx == 0.0:
+        def _pulse(t):
+            if t == 0.0:
                 return 1.0 - r + 4.0*r/np.pi
             else:
-                return (np.sin(np.pi*(1.0 - r)*tx) + (4.0*r*tx)*np.cos(np.pi*(1.0 + r)*tx)) / (np.pi*tx*(1.0 - (4.0*r*tx)**2))
+                return (np.sin(np.pi*(1.0 - r)*t) + (4.0*r*t)*np.cos(np.pi*(1.0 + r)*t)) / (np.pi*t*(1.0 - (4.0*r*t)**2))
 
-        p = _pulse(tx) * ((-t0 <= tx) & (tx < t0))
+        p = _pulse(t) * ((-t0 <= t) & (t < t0))
 
         return p
 
