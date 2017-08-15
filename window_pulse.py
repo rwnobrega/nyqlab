@@ -4,12 +4,13 @@ import matplotlib
 matplotlib.use("Qt5Agg")
 
 import matplotlib.pyplot as plt
+
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
 import numpy as np
 
-from filter_rx import Bypass_ReceiveFilter
+import pulses, filter_rx
 
 
 class WindowPulse(QtWidgets.QMainWindow):
@@ -63,6 +64,11 @@ class WindowPulse(QtWidgets.QMainWindow):
         Ns = 256
         N = (Ns + 2) * sps
 
+        # Blocks  -- TODO: Refactor
+        self.tx = self.system.blocks[2].box
+        self.ch = self.system.blocks[3].box
+        self.rx = self.system.blocks[5].box
+
         # Axes
         self.t = np.arange(-N//2, N//2) / sps
         self.f = np.arange(-N//2, N//2) * (sps / N)
@@ -70,10 +76,13 @@ class WindowPulse(QtWidgets.QMainWindow):
         # Impulse responses
         impulse_d = np.zeros(Ns); impulse_d[Ns//2] = 1
         impulse_c = np.zeros(N); impulse_c[N//2] = sps
-        self.h_tx = self.system.blocks[2].box.process(impulse_d)
-        self.h_ch = self.system.blocks[3].box.process(impulse_c)
-        self.h_rx = self.system.blocks[5].box.process(impulse_c)
-        self.h_ep = self.system.blocks[5].box.process(self.system.blocks[3].box.process(self.h_tx))
+
+        self.h_tx = self.tx.process(impulse_d)
+        self.h_ch = self.ch.process(impulse_c)
+        self.h_rx = self.rx.process(impulse_c)
+        if not isinstance(self.rx, filter_rx.Bypass_ReceiveFilter):
+            self.h_rx /= np.sum(self.h_rx**2) / self.system.sps
+        self.h_ep = self.rx.process(self.ch.process(self.h_tx))
 
         # Frequency responses
         self.H_tx = np.fft.fftshift(np.fft.fft(self.h_tx)) / sps
@@ -85,11 +94,11 @@ class WindowPulse(QtWidgets.QMainWindow):
         self.compute()
 
         self.ax_t.cla()
-        self.ax_t.grid(True)
+        self.ax_t.grid(True, which='major', linestyle='--')
         self.ax_t.set_xlabel('$t / T_\mathrm{s}$')
 
         self.ax_f.cla()
-        self.ax_f.grid(True)
+        self.ax_f.grid(True, which='major', linestyle='--')
         self.ax_f.set_xlabel('$f / R_\mathrm{s}$')
 
         if self.selected == 'TX pulse':
@@ -105,42 +114,29 @@ class WindowPulse(QtWidgets.QMainWindow):
         self.canvas.draw()
 
     def _plot_tx(self):
-        tx = self.system.blocks[2].box
-
         self.ax_t.plot(self.t, self.h_tx, 'k-', linewidth=2)
-        self.ax_t.axis(tx.pulse.ax_t_lim)
+        self.ax_t.axis(self.tx.pulse.ax_t_lim)
 
         self.ax_f.plot(self.f, abs(self.H_tx), 'k-', linewidth=2)
-        self.ax_f.axis(tx.pulse.ax_f_lim)
+        self.ax_f.axis(self.tx.pulse.ax_f_lim)
 
     def _plot_ch(self):
-        ch = self.system.blocks[3].box
-
         self.ax_t.plot(self.t, self.h_ch, 'k-', linewidth=2)
-        self.ax_t.axis(ch.ax_t_lim)
+        self.ax_t.axis(self.ch.ax_t_lim)
 
         self.ax_f.plot(self.f, abs(self.H_ch), 'k-', linewidth=2)
-        self.ax_f.axis(ch.ax_f_lim)
+        self.ax_f.axis(self.ch.ax_f_lim)
 
     def _plot_rx(self):
-        # FIXME: Refactor
-        sps = self.system.sps
-
-        tx = self.system.blocks[2].box
-        rx = self.system.blocks[5].box
-
         delay = 0.0
-        if isinstance(rx, Bypass_ReceiveFilter):
+        if isinstance(self.rx, filter_rx.Bypass_ReceiveFilter):
             t_lim = [-2.0, 2.0, -2.0, 6.0]
             f_lim = [-6.0, 6.0, -0.25, 1.25]
         else:
-            factor = np.sum(self.h_rx**2) / sps
-            t_lim = np.array(tx.pulse.ax_t_lim)
-            f_lim = np.array(tx.pulse.ax_f_lim)
-            t_lim[3:] *= factor
-            f_lim[3:] *= factor
-            delay += 1.0
-
+            t_lim = np.array(self.tx.pulse.ax_t_lim)
+            f_lim = np.array(self.tx.pulse.ax_f_lim)
+            if isinstance(self.tx.pulse, pulses.ShortPulse):
+                delay += 1.0
 
         self.ax_t.plot(self.t + delay, self.h_rx, 'k-', linewidth=2)
         self.ax_t.axis(t_lim)
@@ -149,22 +145,18 @@ class WindowPulse(QtWidgets.QMainWindow):
         self.ax_f.axis(f_lim)
 
     def _plot_ep(self):
-        tx = self.system.blocks[2].box
-        rx = self.system.blocks[5].box
-
-        # FIXME: Refactor
-        t_lim = tx.pulse.ax_t_lim[:]
-        delay = 0.0 #tx.pulse.filt_len/2
-        if not isinstance(rx, Bypass_ReceiveFilter):
-            t_lim[0] -= 0.5
-            t_lim[1] += 1.5
+        delay = 0.0
+        t_lim = np.array(self.tx.pulse.ax_t_lim)
+        f_lim = np.array(self.tx.pulse.ax_f_lim)
+        if not isinstance(self.rx, filter_rx.Bypass_ReceiveFilter) and isinstance(self.tx.pulse, pulses.ShortPulse):
+            t_lim[0:2] += [-0.5, 1.5]
             delay += 1.0
 
         self.ax_t.plot(self.t + delay, self.h_ep, 'k-', linewidth=2)
         self.ax_t.axis(t_lim)
 
         self.ax_f.plot(self.f, abs(self.H_ep), 'k-', linewidth=2)
-        self.ax_f.axis(tx.pulse.ax_f_lim)
+        self.ax_f.axis(f_lim)
 
     def onComboActivated(self, idx):
         self.selected = self.combo.currentText()

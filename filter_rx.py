@@ -38,13 +38,12 @@ class MatchedFilter_ReceiveFilter(ReceiveFilter):
         Ts = self.system.symbol_rate
         fa = self.system.samp_freq
 
-        N = sps * pulse.filt_len
         if isinstance(pulse, pulses.ShortPulse):
-            N += sps
-
-        delay = (N - 1) / fa
-        if isinstance(pulse, pulses.ShortPulse):
-            delay -= Ts
+            N = (pulse.filt_len + 1) * sps
+            delay = (N - 1) / fa - Ts
+        else:
+            N = pulse.filt_len * sps
+            delay = (N - 1) / fa
 
         t = np.arange(N) / sps
         p = pulse.pulse(-t + delay)
