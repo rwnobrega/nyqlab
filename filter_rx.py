@@ -35,19 +35,24 @@ class MatchedFilter_ReceiveFilter(ReceiveFilter):
     def process(self, y):
         pulse = self.system.blocks[2].box.pulse  # FIXME: Refactor
         sps = self.system.sps
+        Ts = self.system.symbol_rate
         fa = self.system.samp_freq
-        filt_len = pulse.filt_len
-        N = sps * filt_len
-        delay = (N - 1) / fa
-        t = np.arange(N) / sps
 
+        N = sps * pulse.filt_len
+        if isinstance(pulse, pulses.ShortPulse):
+            N += sps
+
+        delay = (N - 1) / fa
+        if isinstance(pulse, pulses.ShortPulse):
+            delay -= Ts
+
+        t = np.arange(N) / sps
         p = pulse.pulse(-t + delay)
         p /= np.sum(np.abs(p)**2) / sps
 
         r = np.convolve(y, p) / sps
 
         return r[N//2 - 1: len(y) + N//2 - 1]
-
 
 choices = [
     ('[Bypass]', Bypass_ReceiveFilter()),

@@ -4,6 +4,8 @@ import matplotlib
 matplotlib.use("Qt5Agg")
 
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
+
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
@@ -40,14 +42,19 @@ class WindowScope(QtWidgets.QMainWindow):
 
         # Axis
         self.ax_t = self.figure.add_subplot(2, 1, 1)
-        self.ax_t.grid(True)
+        self.ax_t.grid(True, which='major', linestyle='--')
         self.ax_t.set_xlabel('$t / T_\mathrm{b}$')
         self.ax_t.axis(self.ax_t_lim_free)
+        self.ax_t.xaxis.set_major_locator(ticker.MultipleLocator(1.0))
+        self.ax_t.yaxis.set_major_locator(ticker.MultipleLocator(0.5))
 
         self.ax_f = self.figure.add_subplot(2, 1, 2)
         self.ax_f.axis(self.ax_f_lim)
-        self.ax_f.grid(True)
+        self.ax_f.grid(True, which='major', linestyle='--')
         self.ax_f.set_xlabel('$f / R_\mathrm{b}$')
+        self.ax_f.xaxis.set_major_locator(ticker.MultipleLocator(0.5))
+        self.ax_f.yaxis.set_major_locator(ticker.MultipleLocator(10.0))
+
 
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(toolbar)

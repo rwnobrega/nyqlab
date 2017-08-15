@@ -9,7 +9,7 @@ from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as Navigatio
 
 import numpy as np
 
-from rx_filter import Bypass_ReceiveFilter
+from filter_rx import Bypass_ReceiveFilter
 
 
 class WindowPulse(QtWidgets.QMainWindow):
@@ -107,7 +107,7 @@ class WindowPulse(QtWidgets.QMainWindow):
     def _plot_tx(self):
         tx = self.system.blocks[2].box
 
-        self.ax_t.plot(self.t + tx.pulse.filt_len/2, self.h_tx, 'k-', linewidth=2)
+        self.ax_t.plot(self.t, self.h_tx, 'k-', linewidth=2)
         self.ax_t.axis(tx.pulse.ax_t_lim)
 
         self.ax_f.plot(self.f, abs(self.H_tx), 'k-', linewidth=2)
@@ -133,15 +133,16 @@ class WindowPulse(QtWidgets.QMainWindow):
         if isinstance(rx, Bypass_ReceiveFilter):
             t_lim = [-2.0, 2.0, -2.0, 6.0]
             f_lim = [-6.0, 6.0, -0.25, 1.25]
-            delay -= 0.5
         else:
             factor = np.sum(self.h_rx**2) / sps
             t_lim = np.array(tx.pulse.ax_t_lim)
             f_lim = np.array(tx.pulse.ax_f_lim)
             t_lim[3:] *= factor
             f_lim[3:] *= factor
+            delay += 1.0
 
-        self.ax_t.plot(self.t + tx.pulse.filt_len/2 + delay, self.h_rx, 'k-', linewidth=2)
+
+        self.ax_t.plot(self.t + delay, self.h_rx, 'k-', linewidth=2)
         self.ax_t.axis(t_lim)
 
         self.ax_f.plot(self.f, abs(self.H_rx), 'k-', linewidth=2)
@@ -153,11 +154,11 @@ class WindowPulse(QtWidgets.QMainWindow):
 
         # FIXME: Refactor
         t_lim = tx.pulse.ax_t_lim[:]
-        delay = tx.pulse.filt_len/2
+        delay = 0.0 #tx.pulse.filt_len/2
         if not isinstance(rx, Bypass_ReceiveFilter):
             t_lim[0] -= 0.5
             t_lim[1] += 1.5
-            delay += 0.5
+            delay += 1.0
 
         self.ax_t.plot(self.t + delay, self.h_ep, 'k-', linewidth=2)
         self.ax_t.axis(t_lim)

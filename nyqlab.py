@@ -5,7 +5,7 @@ import sys
 
 from PyQt5 import QtGui, QtWidgets
 
-import sources, encoder, tx_filter, channels_frequency, channels_noise, rx_filter, sampler, decoder
+import sources, encoder, filter_tx, channels_frequency, channels_noise, filter_rx, sampler, decoder
 
 from system_simulator import SystemSimulator, Block
 from system_diagram import SystemDiagram, BlockD, ConnectionD
@@ -31,10 +31,10 @@ class MainWindow(QtWidgets.QMainWindow):
         blocks_s = [
             Block(sources, 'D'),
             Block(encoder, 'D'),
-            Block(tx_filter, 'C'),
+            Block(filter_tx, 'C'),
             Block(channels_frequency, 'C'),
             Block(channels_noise, 'C'),
-            Block(rx_filter, 'C'),
+            Block(filter_rx, 'C'),
             Block(sampler, 'D'),
             Block(decoder, 'D'),
         ]

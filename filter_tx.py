@@ -31,47 +31,53 @@ class PulseFormatter_TransmitFilter(TransmitFilter):
         sps = self.system.sps
         filt_len = self.pulse.filt_len
         N = sps * filt_len
-        t = np.arange(N) / sps
 
+        t = np.arange(N) / sps
         p = self.pulse.pulse(t)
         w = np.zeros((len(x) + 2) * sps)
         w[sps : -sps : sps] = x
 
         s = np.convolve(w, p)
 
-        return s[N//2 : len(w) + N//2]
+        if isinstance(self.pulse, pulses.ShortPulse):
+            return s[: len(w)]
+        else:
+            return s[N//2 : len(w) + N//2]
 
 
 class PulseFormatter_TransmitFilter_Widget(TransmitFilter_Widget):
     def initUI(self):
-        self.combo = QtWidgets.QComboBox()
-        self.combo.addItems(list(pulses.collection.keys()))
-        self.combo.activated[str].connect(self.onChange)
+        self.pulses_combo = QtWidgets.QComboBox()
+        self.pulses_combo.addItems(list(pulses.collection.keys()))
+        self.pulses_combo.activated[str].connect(self.onChangePulse)
 
-        layoutH = QtWidgets.QHBoxLayout()
-        layoutH.addWidget(QtWidgets.QLabel('Pulse:'), 0)
-        layoutH.addWidget(self.combo, 1)
+        layout_top = QtWidgets.QHBoxLayout()
+        layout_top.addWidget(QtWidgets.QLabel('Pulse:'), 0)
+        layout_top.addWidget(self.pulses_combo, 1)
 
-        layoutV = QtWidgets.QVBoxLayout()
-        layoutV.addLayout(layoutH)
+        layout_pulses = QtWidgets.QVBoxLayout()
         self.pulse_widgets = {}
         for i, (key, val) in enumerate(pulses.collection.items()):
             w = val.widget()
             w.setVisible(i == 0)
             if hasattr(w, 'update_signal'):
                 w.update_signal.connect(self.update_signal.emit)
-            layoutV.addWidget(w)
+            layout_pulses.addWidget(w)
             self.pulse_widgets[key] = w
-        self.setLayout(layoutV)
 
-    def onChange(self, text):
+        layout = QtWidgets.QVBoxLayout()
+        layout.addLayout(layout_top)
+        layout.addLayout(layout_pulses)
+        self.setLayout(layout)
+
+    def onChangePulse(self, text):
         self.tx_filter.pulse = pulses.collection[text]
         for key in pulses.collection.keys():
             self.pulse_widgets[key].setVisible(key == text)
-
         self.update_signal.emit()
 
 
 choices = [
     ('Pulse formatter', PulseFormatter_TransmitFilter()),
 ]
+

@@ -6,10 +6,6 @@ from PyQt5 import QtCore, QtWidgets
 
 
 class Pulse:
-    filt_len = 1
-    ax_t_lim = [-0.5, 1.5, -0.25, 1.25]
-    ax_f_lim = [-10.0, 10.0, -0.25, 1.25]
-
     def widget(self):
         try:
             return globals()[self.__class__.__name__ + '_Widget'](self)
@@ -26,19 +22,31 @@ class Pulse_Widget(QtWidgets.QWidget):
         self.initUI()
 
 
-# Pulses
+class ShortPulse(Pulse):
+    filt_len = 1
+    ax_t_lim = [-0.25, 1.25, -0.25, 1.25]
+    ax_f_lim = [-10.0, 10.0, -0.25, 1.25]
 
-class RectangularNRZ_Pulse(Pulse):
+
+class LongPulse(Pulse):
+    filt_len = 64
+    ax_t_lim = [-7.5, +7.5, -0.5, 1.25]
+    ax_f_lim = [-1.5, 1.5, -0.25, 1.25]
+
+
+# Short pulses
+
+class RectangularNRZ_Pulse(ShortPulse):
     def pulse(self, t):
         return 1.0 * ((0.0 <= t) & (t < 1.0))
 
 
-class RectangularRZ_Pulse(Pulse):
+class RectangularRZ_Pulse(ShortPulse):
     def pulse(self, t):
         return 1.0 * ((0.0 <= t) & (t < 0.5))
 
 
-class Manchester_Pulse(Pulse):
+class Manchester_Pulse(ShortPulse):
     ax_t_lim = [-0.5, 1.5, -1.25, 1.25]
 
     def pulse(self, t):
@@ -46,7 +54,7 @@ class Manchester_Pulse(Pulse):
                -1.0 * ((0.5 <= t) & (t < 1.0))
 
 
-class Wal2_Pulse(Pulse):
+class Wal2_Pulse(ShortPulse):
     ax_t_lim = [-0.5, 1.5, -1.25, 1.25]
 
     def pulse(self, t):
@@ -55,70 +63,54 @@ class Wal2_Pulse(Pulse):
                -1.0 * ((0.75 <= t) & (t < 1.00))
 
 
-class Triangular_Pulse(Pulse):
+class Triangular_Pulse(ShortPulse):
     def pulse(self, t):
         return (1.0 - abs(2.0*t - 1.0)) * ((0.0 <= t) & (t < 1.0))
 
 
-class Sinc_Pulse(Pulse):
-    def __init__(self, filt_len=64):
-        self.filt_len = filt_len
-        self.update_properties()
+# Long pulses
 
+class Sinc_Pulse(LongPulse):
     def pulse(self, t):
         t0 = self.filt_len / 2
         t -= t0
         return np.sinc(t) * ((-t0 <= t) & (t < t0))
 
-    def update_properties(self):
-        filt_len = self.filt_len
-        self.ax_t_lim = [filt_len / 2 - 7.5, filt_len / 2 + 7.5, -0.5, 1.25]
-        self.ax_f_lim = [-1.5, 1.5, -0.25, 1.25]
-
 
 class Sinc_Pulse_Widget(Pulse_Widget):
     def initUI(self):
         self.filt_len_text = QtWidgets.QLineEdit(str(self.pulse.filt_len))
-        self.filt_len_text.editingFinished.connect(self.onChange_filt_len_text)
+        self.filt_len_text.editingFinished.connect(
+            lambda: self._update('filt_len', int(self.filt_len_text.text()))
+        )
 
-        layout = QtWidgets.QHBoxLayout()
-        layout.addWidget(QtWidgets.QLabel('Filter length [Ts]:'), 1)
-        layout.addWidget(self.filt_len_text, 2)
-
+        layout = QtWidgets.QGridLayout()
+        layout.addWidget(QtWidgets.QLabel('Filter length [Ts]:'), 0, 0, 1, 1)
+        layout.addWidget(self.filt_len_text, 0, 1, 1, 2)
         self.setLayout(layout)
 
-    def onChange_filt_len_text(self):
-        self.pulse.filt_len = int(self.filt_len_text.text())
-        self.pulse.update_properties()
-        self.filt_len_text.setText(str(self.pulse.filt_len))
+        self._update('filt_len', self.pulse.filt_len)
+
+    def _update(self, key, value):
+        if key == 'filt_len':
+            self.pulse.filt_len = value
+            self.filt_len_text.setText(str(value))
         self.update_signal.emit()
 
 
-class SquaredSinc_Pulse(Pulse):
-    def __init__(self, filt_len=64):
-        self.filt_len = filt_len
-        self.update_properties()
-
+class SquaredSinc_Pulse(LongPulse):
     def pulse(self, t):
         t0 = self.filt_len / 2
         t -= t0
         return np.sinc(t)**2 * ((-t0 <= t) & (t < t0))
-
-    def update_properties(self):
-        filt_len = self.filt_len
-        self.ax_t_lim = [filt_len / 2 - 7.5, filt_len / 2 + 7.5, -0.5, 1.25]
-        self.ax_f_lim = [-1.5, 1.5, -0.25, 1.25]
 
 
 class SquaredSinc_Pulse_Widget(Sinc_Pulse_Widget):
     pass
 
 
-class RaisedCosine_Pulse(Pulse):
-    def __init__(self, filt_len=64, rolloff=0.5):
-        self.filt_len = filt_len
-        self.rolloff = rolloff
-        self.update_properties()
+class RaisedCosine_Pulse(LongPulse):
+    rolloff = 0.5
 
     def pulse(self, t):
         t0 = self.filt_len / 2
@@ -126,11 +118,6 @@ class RaisedCosine_Pulse(Pulse):
         r = self.rolloff + 1.0e-12  # Because of numerical issues
         p = np.sinc(t) * (np.cos(np.pi*r*t)) / (1.0 - 4.0 * r**2 * t**2)
         return p * ((-t0 <= t) & (t < t0))
-
-    def update_properties(self):
-        filt_len = self.filt_len
-        self.ax_t_lim = [filt_len / 2 - 7.5, filt_len / 2 + 7.5, -0.5, 1.25]
-        self.ax_f_lim = [-1.5, 1.5, -0.25, 1.25]
 
 
 class RaisedCosine_Pulse_Widget(Pulse_Widget):
@@ -151,18 +138,12 @@ class RaisedCosine_Pulse_Widget(Pulse_Widget):
             lambda: self._update('rolloff', self.rolloff_slider.value() / 100)
         )
 
-        layout0 = QtWidgets.QHBoxLayout()
-        layout0.addWidget(QtWidgets.QLabel('Filter length [Ts]:'), 1)
-        layout0.addWidget(self.filt_len_text, 2)
-
-        layout1 = QtWidgets.QHBoxLayout()
-        layout1.addWidget(QtWidgets.QLabel('Rolloff factor:'), 1)
-        layout1.addWidget(self.rolloff_text, 1)
-        layout1.addWidget(self.rolloff_slider, 2)
-
-        layout = QtWidgets.QVBoxLayout()
-        layout.addLayout(layout0)
-        layout.addLayout(layout1)
+        layout = QtWidgets.QGridLayout()
+        layout.addWidget(QtWidgets.QLabel('Filter length [Ts]:'), 0, 0, 1, 1)
+        layout.addWidget(self.filt_len_text, 0, 1, 1, 2)
+        layout.addWidget(QtWidgets.QLabel('Rolloff factor:'), 1, 0, 1, 1)
+        layout.addWidget(self.rolloff_text, 1, 1, 1, 1)
+        layout.addWidget(self.rolloff_slider, 1, 2, 1, 1)
         self.setLayout(layout)
 
         self._update('filt_len', self.pulse.filt_len)
@@ -171,7 +152,6 @@ class RaisedCosine_Pulse_Widget(Pulse_Widget):
     def _update(self, key, value):
         if key == 'filt_len':
             self.pulse.filt_len = value
-            self.pulse.update_properties()
             self.filt_len_text.setText(str(value))
         elif key == 'rolloff':
             self.pulse.rolloff = float(value)
@@ -180,15 +160,11 @@ class RaisedCosine_Pulse_Widget(Pulse_Widget):
         self.update_signal.emit()
 
 
-class RootRaisedCosine_Pulse(Pulse):
-    def __init__(self, filt_len=64, rolloff=0.5):
-        self.filt_len = filt_len
-        self.rolloff = rolloff
-        self.update_properties()
+class RootRaisedCosine_Pulse(LongPulse):
+    rolloff = 0.5
 
     def pulse(self, t):
         t0 = self. filt_len / 2
-
         t -= t0
         r = self.rolloff + 1.0e-12  # Because of numerical issues
 
@@ -202,11 +178,6 @@ class RootRaisedCosine_Pulse(Pulse):
         p = _pulse(t) * ((-t0 <= t) & (t < t0))
 
         return p
-
-    def update_properties(self):
-        filt_len = self.filt_len
-        self.ax_t_lim = [filt_len / 2 - 7.5, filt_len / 2 + 7.5, -0.5, 1.25]
-        self.ax_f_lim = [-1.5, 1.5, -0.25, 1.25]
 
 
 class RootRaisedCosine_Pulse_Widget(RaisedCosine_Pulse_Widget):
