@@ -131,7 +131,7 @@ class MainWindow(QtWidgets.QMainWindow):
         action_view_scope = QtWidgets.QAction(QtGui.QIcon.fromTheme('utilities-system-monitor'), 'Scope', self)
         action_view_scope.triggered.connect(self.showWindowScope)
 
-        action_view_pulse = QtWidgets.QAction(QtGui.QIcon('media/pulse'), 'View pulse', self)
+        action_view_pulse = QtWidgets.QAction(QtGui.QIcon('media/pulse'), 'Pulse', self)
         action_view_pulse.triggered.connect(self.showWindowPulse)
 
         toolbar = QtWidgets.QToolBar()
