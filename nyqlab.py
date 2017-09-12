@@ -3,7 +3,7 @@
 import functools
 import sys
 
-from PyQt5 import QtGui, QtWidgets
+from PyQt5 import QtGui, QtWidgets, QtCore
 
 import sources, encoder, filter_tx, channels_frequency, channels_noise, filter_rx, sampler, decoder
 
@@ -108,6 +108,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def initUI(self):
         self.setWindowTitle('NyqLab')
+        self.always_on_top = False
         self.move(0, 0)
 
         # BER label
@@ -134,10 +135,17 @@ class MainWindow(QtWidgets.QMainWindow):
         action_view_pulse = QtWidgets.QAction(QtGui.QIcon('media/pulse'), 'Pulse', self)
         action_view_pulse.triggered.connect(self.showWindowPulse)
 
+        action_always_on_top = QtWidgets.QAction(QtGui.QIcon.fromTheme('go-top'), 'Always on top', self)
+        action_always_on_top.setCheckable(True)
+        action_always_on_top.triggered.connect(self.toggleAlwaysOnTop)
+
         toolbar = QtWidgets.QToolBar()
         toolbar.addAction(action_options_general)
+        toolbar.addSeparator()
         toolbar.addAction(action_view_scope)
         toolbar.addAction(action_view_pulse)
+        toolbar.addSeparator()
+        toolbar.addAction(action_always_on_top)
 
         # Main layout
         layout = QtWidgets.QVBoxLayout()
@@ -184,6 +192,14 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def showWindowPulse(self):
         self.window_pulse.show()
+
+    def toggleAlwaysOnTop(self):
+        self.always_on_top ^= True
+        if self.always_on_top:
+            self.setWindowFlags(self.windowFlags() ^ QtCore.Qt.WindowStaysOnTopHint)
+        else:
+            self.setWindowFlags(self.windowFlags() & ~QtCore.Qt.WindowStaysOnTopHint)
+        self.show()
 
     def compute_and_plot(self):
         self.compute()
