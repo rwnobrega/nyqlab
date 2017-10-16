@@ -1,6 +1,6 @@
 # NyqLab
 
-NyqLab is an educational software aiming to help students learn and practice basic concepts on analog and digital communication systems.  NyqLab is written in [Python3](http://www.python.org/).
+**NyqLab** is an educational software aiming to help students learn and practice basic concepts on analog and digital communication systems.  NyqLab is written in [Python3](http://www.python.org/).
 
 ![NyqLab screenshot](/media/screenshot.png)
 
