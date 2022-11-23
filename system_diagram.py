@@ -41,8 +41,8 @@ class SystemDiagram(QtWidgets.QGraphicsView):
         for i, b in enumerate(self.blocks_d):
             self.addBlock(i, b)
 
-        self.setFixedHeight(self.scene.height() + 1.5*self.K)
-        self.setMinimumWidth(self.scene.width() + 1.5*self.K)
+        self.setFixedHeight (int(self.scene.height() + 1.5*self.K))
+        self.setMinimumWidth(int(self.scene.width() + 1.5*self.K))
 
     def addBlock(self, idx, block):
         left, top, width, height = list(x * self.K for x in block.geometry)

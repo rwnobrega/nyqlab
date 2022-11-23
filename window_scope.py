@@ -71,8 +71,10 @@ class WindowScope(QtWidgets.QMainWindow):
         s_inst = self.system.sampling_instant
 
         # Time domain
-        self.ax_t.lines = []
-        self.ax_t.collections = []
+        for line in self.ax_t.lines:
+            line.remove()
+        for collection in self.ax_t.collections:
+            collection.remove()
         self.plots_t = []
         if not self.show_eye_diagram:
             self.ax_t.axhline(0.0, color='k')
@@ -103,7 +105,8 @@ class WindowScope(QtWidgets.QMainWindow):
                 self.plots_t.append(lines_t)
 
         # Frequency domain
-        self.ax_f.lines = []
+        for line in self.ax_f.lines:
+            line.remove()
         self.plots_f = []
         self.ax_f.axhline(0.0, color='k')
         f = self.system.f
